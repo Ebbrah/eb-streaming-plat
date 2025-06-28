@@ -1,18 +1,21 @@
 version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - cd packages/web
-        - npm ci
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: packages/web/.next
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - packages/web/node_modules/**/*
-      - packages/shared/node_modules/**/* 
+applications:
+  - appRoot: packages/web
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - corepack enable
+            - corepack prepare yarn@4.9.2 --activate
+            - yarn install --immutable
+        build:
+          commands:
+            - yarn run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - .next/cache/**/*
+          - node_modules/**/*

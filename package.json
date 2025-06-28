@@ -1,0 +1,20 @@
+{
+  "name": "netflix-clone",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "web": "yarn workspace @mana/web start",
+    "mobile": "yarn workspace mana-movies start",
+    "android-tv": "yarn workspace @mana/android-tv start",
+    "server": "yarn workspace @mana/server start",
+    "dev": "concurrently \"yarn server\" \"yarn web\"",
+    "start": "next start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "packageManager": "yarn@4.9.2"
+}

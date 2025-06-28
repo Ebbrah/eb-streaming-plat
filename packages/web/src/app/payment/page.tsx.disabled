@@ -1,0 +1,126 @@
+'use client';
+
+import { useState } from 'react';
+import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
+
+export default function PaymentPage() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+
+  const handleMpesaPayment = async () => {
+    if (!phoneNumber) {
+      toast.error('Please enter your phone number');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/payments/mpesa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: 100,
+          phoneNumber,
+          description: 'Monthly Subscription',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Payment initiated! Please check your phone for the M-Pesa prompt.');
+      } else {
+        toast.error(data.message || 'Payment failed');
+      }
+    } catch (error) {
+      toast.error('An error occurred during payment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMixPayment = async () => {
+    if (!phoneNumber) {
+      toast.error('Please enter your phone number');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/payments/mix', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: 100,
+          phoneNumber,
+          description: 'Monthly Subscription',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Payment initiated! Please check your phone for the Mix prompt.');
+      } else {
+        toast.error(data.message || 'Payment failed');
+      }
+    } catch (error) {
+      toast.error('An error occurred during payment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isAuthenticated) {
+    router.push('/auth/login');
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-900">Choose Payment Method</h1>
+        
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="mb-6">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="Enter your phone number"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+            />
+          </div>
+
+          <button
+            onClick={handleMpesaPayment}
+            disabled={loading}
+            className="w-full bg-purple-600 text-white py-3 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 mb-4 disabled:opacity-50"
+          >
+            Pay with M-Pesa
+          </button>
+
+          <button
+            onClick={handleMixPayment}
+            disabled={loading}
+            className="w-full bg-purple-600 text-white py-3 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50"
+          >
+            Pay with Mix by Yas
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+} 

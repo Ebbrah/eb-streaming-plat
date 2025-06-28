@@ -1,0 +1,1 @@
+web: npm run start -- -p 8080 -H 0.0.0.0 

@@ -5,6 +5,8 @@ applications:
       phases:
         preBuild:
           commands:
+            - corepack enable
+            - corepack prepare yarn@4.9.2 --activate
             - yarn install
         build:
           commands:

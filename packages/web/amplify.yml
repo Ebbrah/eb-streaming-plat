@@ -7,7 +7,7 @@ applications:
           commands:
             - corepack enable
             - corepack prepare yarn@4.9.2 --activate
-            - yarn install --immutable
+            - yarn install
         build:
           commands:
             - yarn run build

@@ -26,6 +26,10 @@ const nextConfig = {
         },
       },
     };
+    // Add alias for @mana/shared
+    config.resolve = config.resolve || {};
+    config.resolve.alias = config.resolve.alias || {};
+    config.resolve.alias['@mana/shared'] = require('path').resolve(__dirname, '../shared/src');
     return config;
   },
   // Add any other Next.js configuration options here

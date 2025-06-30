@@ -68,7 +68,7 @@ mongoose.connection.on('reconnected', () => {
 // Routes
 const movieRoutes = require('./routes/movieRoutes');
 const userRoutes = require('./routes/userRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
+//const paymentRoutes = require('./routes/paymentRoutes');
 
 // Add route logging
 app.use((req, res, next) => {
@@ -85,7 +85,7 @@ app.use((req, res, next) => {
 // Register routes with explicit paths
 app.use('/api/movies', movieRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/payments', paymentRoutes);
+//app.use('/api/payments', paymentRoutes);
 
 // Add error handling middleware
 app.use((err, req, res, next) => {

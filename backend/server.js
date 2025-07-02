@@ -98,7 +98,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start HTTP server only
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8081;
 const HOST = '0.0.0.0'; // Listen on all network interfaces
 http.createServer(app).listen(PORT, HOST, () => {
     console.log(`HTTP Server running on ${HOST}:${PORT}`);

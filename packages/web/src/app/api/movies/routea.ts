@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies`, {
       headers: {
         'Authorization': authHeader,
       },
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies`, {
       method: 'POST',
       headers: {
         'Authorization': authHeader,

@@ -51,7 +51,7 @@ export async function DELETE(
       );
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies/${params.id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies/${params.id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': authHeader,

@@ -117,7 +117,7 @@ export default function MovieManagement() {
 
       const loadingToast = toast.loading('Uploading movie...');
 
-      const response = await fetch('http://localhost:3000/api/movies', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -166,7 +166,7 @@ export default function MovieManagement() {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/movies?limit=1000', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies?limit=1000`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -195,7 +195,7 @@ export default function MovieManagement() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/api/movies/${movieId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies/${movieId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -226,7 +226,7 @@ export default function MovieManagement() {
         toast.error('Please log in again');
         return;
       }
-      const response = await fetch(`http://localhost:3000/api/movies/${movieId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies/${movieId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -255,7 +255,7 @@ export default function MovieManagement() {
         toast.error('Please log in again');
         return;
       }
-      const response = await fetch(`http://localhost:3000/api/movies/${movie._id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies/${movie._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

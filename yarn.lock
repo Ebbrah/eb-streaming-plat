@@ -2590,15 +2590,15 @@ __metadata:
 
 "@mana/shared@file:../shared::locator=%40mana%2Ftv%40workspace%3Apackages%2Ftv":
   version: 1.0.0
-  resolution: "@mana/shared@file:../shared#../shared::hash=e2257e&locator=%40mana%2Ftv%40workspace%3Apackages%2Ftv"
-  checksum: 10c0/6d4acc3bfb72853131b31125976945a7237bb74dbdfb8c69d7cfe00af53225421c3f25249d2b4b39b316cb9d38213aee6adfc57d8ac68c27e75e1a84eb020355
+  resolution: "@mana/shared@file:../shared#../shared::hash=a792c9&locator=%40mana%2Ftv%40workspace%3Apackages%2Ftv"
+  checksum: 10c0/0c59ca54beb6fa31db884c06790d76a9ed9f70284c0ac61d728475a4a3494c727e9f80ef59ae7297a924aa7e621e92cd966dc068f3516dddc59c34869de96059
   languageName: node
   linkType: hard
 
 "@mana/shared@file:../shared::locator=%40mana%2Fweb%40workspace%3Apackages%2Fweb":
   version: 1.0.0
-  resolution: "@mana/shared@file:../shared#../shared::hash=e2257e&locator=%40mana%2Fweb%40workspace%3Apackages%2Fweb"
-  checksum: 10c0/6d4acc3bfb72853131b31125976945a7237bb74dbdfb8c69d7cfe00af53225421c3f25249d2b4b39b316cb9d38213aee6adfc57d8ac68c27e75e1a84eb020355
+  resolution: "@mana/shared@file:../shared#../shared::hash=a792c9&locator=%40mana%2Fweb%40workspace%3Apackages%2Fweb"
+  checksum: 10c0/0c59ca54beb6fa31db884c06790d76a9ed9f70284c0ac61d728475a4a3494c727e9f80ef59ae7297a924aa7e621e92cd966dc068f3516dddc59c34869de96059
   languageName: node
   linkType: hard
 

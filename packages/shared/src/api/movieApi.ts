@@ -1,7 +1,7 @@
 import { Movie, MovieResponse } from '../types/movie';
 
 // Use environment variable or fallback to deployed backend URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://Mana-backen-env.eba-y2a2eum9.us-west-1.elasticbeanstalk.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 30000) => {
   const controller = new AbortController();

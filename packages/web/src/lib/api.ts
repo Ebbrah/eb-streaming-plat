@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://Mana-backen-env.eba-y2a2eum9.us-west-1.elasticbeanstalk.com/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL + '/api',
   headers: {
     'Content-Type': 'application/json',
   },

@@ -191,9 +191,9 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
           </div>
         </div>
       )}
-      {/* Genre Rows */}
+      {/* Genre Rows - render all genres dynamically */}
       <div className="relative z-20 max-w-7xl mx-auto px-4 py-8">
-        {genreOrder.map((genre) =>
+        {Object.keys(genreMap).map((genre) =>
           genreMap[genre] && genreMap[genre].length > 0 ? (
             <section key={genre} className="mb-4">
               <h2 className="text-2xl font-bold text-white mb-2">{genre}</h2>

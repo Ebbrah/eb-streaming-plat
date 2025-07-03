@@ -38,9 +38,18 @@ export default function HomePage() {
     }
   }, [authLoading]);
 
-  if (loading || authLoading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  if (error) return <div className="text-red-500 text-center py-8">{error}</div>;
-  if (!movies.length) return <div className="text-gray-400 text-center py-8">No movies found.</div>;
+  if (loading || authLoading) {
+    console.log('[DIAG] HomePage: Loading...');
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  if (error) {
+    console.error('[DIAG] HomePage: Error state:', error);
+    return <div className="text-red-500 text-center py-8">{error}</div>;
+  }
+  if (!movies.length) {
+    console.warn('[DIAG] HomePage: Movies array is empty or not set:', movies);
+    return <div className="text-gray-400 text-center py-8">No movies found.</div>;
+  }
 
   if (!isAuthenticated) {
     return <LandingPage trendingMovies={featuredMovies} />;

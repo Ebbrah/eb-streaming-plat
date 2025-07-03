@@ -33,6 +33,19 @@ export const movieApi = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
+      // Diagnostic logging
+      if (Array.isArray(data)) {
+        console.warn('[DIAG] movieApi.getMovies: Data is an array, not an object. Length:', data.length);
+      } else if (data && typeof data === 'object') {
+        console.log('[DIAG] movieApi.getMovies: Data keys:', Object.keys(data));
+        if (Array.isArray(data.data)) {
+          console.log('[DIAG] movieApi.getMovies: data.data is an array. Length:', data.data.length);
+        } else {
+          console.warn('[DIAG] movieApi.getMovies: data.data is not an array:', data.data);
+        }
+      } else {
+        console.error('[DIAG] movieApi.getMovies: Data is not an array or object:', data);
+      }
       console.log('Movies fetched successfully:', data);
       return data;
     } catch (error) {

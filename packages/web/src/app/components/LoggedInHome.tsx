@@ -85,6 +85,9 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
   });
 
   console.log('[DIAG] LoggedInHome: movies prop:', movies);
+  if (movies.length) {
+    console.log('[DIAG] Sample movie:', movies[0]);
+  }
   console.log('[DIAG] LoggedInHome: genreMap:', genreMap);
   if (!movies.length) {
     console.warn('[DIAG] LoggedInHome: movies is empty:', movies);

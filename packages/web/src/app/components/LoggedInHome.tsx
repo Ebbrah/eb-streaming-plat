@@ -54,34 +54,34 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
   }, [featuredMovies.length]);
   const heroMovie = featuredMovies[currentHeroIdx];
 
-  // --- GENRE ROWS: Use user-specified order ---
-  const genreOrder = [
+  // Only display these genres
+  const allowedGenres = [
     'Semina 2020 - 2025',
     'Kongamano 2020 - 2025',
     'Semina 2015 - 2019',
-    'Kongamano 2015 - 2019',
     'Semina 2010 - 2014',
-    'Kongamano 2010 - 2014',
     'Semina 2005 - 2009',
-    'Kongamano 2005 - 2009',
     'Semina 2000 - 2004',
-    'Kongamano 2000 - 2004',
     'Semina 1995 - 1999',
-    'Kongamano 1995 - 1999',
     'Semina 1990 - 1994',
-    'Kongamano 1990 - 1994',
   ];
+
+  // Filter movies to only those with allowed genres
+  const filteredMovies = movies.filter(movie =>
+    Array.isArray(movie.genre)
+      ? movie.genre.some(g => allowedGenres.includes(g))
+      : allowedGenres.includes(movie.genre)
+  );
+
+  // Build genreMap only from filteredMovies and allowedGenres
   const genreMap: { [genre: string]: Movie[] } = {};
-  movies.forEach((movie) => {
-    if (Array.isArray(movie.genre)) {
-      movie.genre.forEach((g) => {
+  filteredMovies.forEach((movie) => {
+    (Array.isArray(movie.genre) ? movie.genre : [movie.genre]).forEach((g) => {
+      if (allowedGenres.includes(g)) {
         if (!genreMap[g]) genreMap[g] = [];
         genreMap[g].push(movie);
-      });
-    } else if (movie.genre) {
-      if (!genreMap[movie.genre]) genreMap[movie.genre] = [];
-      genreMap[movie.genre].push(movie);
-    }
+      }
+    });
   });
 
   console.log('[DIAG] LoggedInHome: movies prop:', movies);
@@ -194,9 +194,9 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
           </div>
         </div>
       )}
-      {/* Genre Rows - render all genres dynamically */}
+      {/* Genre Rows - only allowed genres */}
       <div className="relative z-20 max-w-7xl mx-auto px-4 py-8">
-        {Object.keys(genreMap).map((genre) =>
+        {allowedGenres.map((genre) =>
           genreMap[genre] && genreMap[genre].length > 0 ? (
             <section key={genre} className="mb-4">
               <h2 className="text-2xl font-bold text-white mb-2">{genre}</h2>

@@ -16,11 +16,17 @@ class MovieController {
             const videoKey = `movies/${Date.now()}-${videoFile.originalname}`;
             const videoUrl = await S3Service.uploadFile(videoFile, videoKey);
 
+            // Ensure genre is always set
+            let safeGenre = genre;
+            if (!safeGenre || (typeof safeGenre === 'string' && safeGenre.trim() === '')) {
+                safeGenre = 'Other';
+            }
+
             // Create movie in database
             const movie = new Movie({
                 title,
                 description,
-                genre,
+                genre: safeGenre,
                 releaseYear,
                 videoKey,
                 videoUrl
@@ -79,6 +85,11 @@ class MovieController {
     static async getAllMovies(req, res) {
         try {
             const movies = await Movie.find({}, '-videoKey');
+            if (movies.length) {
+                console.log('Sample movie from DB:', movies[0]);
+            } else {
+                console.log('No movies found in DB.');
+            }
             res.json({ success: true, data: movies });
         } catch (error) {
             console.error('Error getting movies:', error);

@@ -82,6 +82,11 @@ app.use((req, res, next) => {
     next();
 });
 
+// Health check route for EB
+app.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // Register routes with explicit paths
 app.use('/api/movies', movieRoutes);
 app.use('/api/users', userRoutes);

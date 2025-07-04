@@ -51,12 +51,14 @@ class UserController {
             res.status(201).json({
                 message: 'User registered successfully',
                 success: true,
-                token,
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role
+                data: {
+                    token,
+                    user: {
+                        id: user._id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role
+                    }
                 }
             });
         } catch (error) {
@@ -106,12 +108,14 @@ class UserController {
             res.json({
                 message: 'Login successful',
                 success: true,
-                token,
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role
+                data: {
+                    token,
+                    user: {
+                        id: user._id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role
+                    }
                 }
             });
         } catch (error) {

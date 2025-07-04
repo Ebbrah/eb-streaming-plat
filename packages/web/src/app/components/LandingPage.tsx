@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TrailerPlayer from './TrailerPlayer';
 
-interface TrendingMovie {
+interface FeaturedMovie {
   _id: string;
   title: string;
   thumbnailUrl: string;
@@ -10,16 +10,17 @@ interface TrendingMovie {
   videoUrl?: string;
   hlsManifestUrl?: string;
   description?: string;
+  featured?: boolean;
 }
 
 interface LandingPageProps {
-  trendingMovies?: TrendingMovie[];
+  featuredMovies?: FeaturedMovie[];
 }
 
-export default function LandingPage({ trendingMovies = [] }: LandingPageProps) {
+export default function LandingPage({ featuredMovies = [] }: LandingPageProps) {
   const [email, setEmail] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedMovie, setSelectedMovie] = useState<TrendingMovie | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<FeaturedMovie | null>(null);
   const router = useRouter();
 
   const handleGetStarted = (e: React.FormEvent) => {
@@ -131,11 +132,11 @@ export default function LandingPage({ trendingMovies = [] }: LandingPageProps) {
         </div>
       </main>
 
-      {/* Trending Now Row */}
+      {/* Featured Movies Row */}
       <section className="relative z-10 w-full max-w-6xl mx-auto mt-12 mb-8">
-        <h3 className="text-2xl font-bold mb-4 px-4" style={textStyle}>Trending Now</h3>
+        <h3 className="text-2xl font-bold mb-4 px-4" style={textStyle}>Featured Movies</h3>
         <div className="flex flex-nowrap space-x-6 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 px-4 pb-4">
-          {trendingMovies.length > 0 ? trendingMovies.map((movie, idx) => (
+          {featuredMovies.length > 0 ? featuredMovies.map((movie, idx) => (
             <div 
               key={movie._id} 
               className="min-w-[240px] max-w-[320px] aspect-w-16 aspect-h-9 flex-shrink-0 relative cursor-pointer hover:scale-105 transition-transform duration-200"
@@ -147,12 +148,14 @@ export default function LandingPage({ trendingMovies = [] }: LandingPageProps) {
                 className="w-full h-full object-cover rounded-lg shadow-lg border-2 border-gray-800"
                 style={{ aspectRatio: '16/9' }}
               />
-              <span className="absolute left-2 bottom-2 text-3xl font-extrabold drop-shadow-lg" style={textStyle}>{idx + 1}</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent rounded-lg" />
+              <div className="absolute bottom-2 left-2 right-2">
+                <h4 className="text-white font-semibold text-sm truncate">{movie.title}</h4>
+              </div>
             </div>
           )) : [1,2,3,4,5,6].map((n) => (
             <div key={n} className="min-w-[240px] max-w-[320px] aspect-w-16 aspect-h-9 flex-shrink-0 relative">
               <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center text-gray-300" style={{ aspectRatio: '16/9' }}>No Image</div>
-              <span className="absolute left-2 bottom-2 text-3xl font-extrabold drop-shadow-lg" style={textStyle}>{n}</span>
             </div>
           ))}
         </div>

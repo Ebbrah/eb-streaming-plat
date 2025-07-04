@@ -52,7 +52,7 @@ export default function HomePage() {
   }
 
   if (!isAuthenticated) {
-    return <LandingPage trendingMovies={featuredMovies} />;
+    return <LandingPage featuredMovies={featuredMovies} />;
   }
   return (
     <>

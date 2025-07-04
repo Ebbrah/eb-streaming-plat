@@ -14,6 +14,7 @@ interface Movie {
   featured: boolean;
   releaseYear?: number;
   duration: number;
+  createdAt?: string;
 }
 
 // Form state type allows number | '' for numeric fields

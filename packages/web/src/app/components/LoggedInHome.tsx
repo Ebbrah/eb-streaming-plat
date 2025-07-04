@@ -14,6 +14,7 @@ interface Movie {
   featured?: boolean;
   releaseYear?: number;
   rating?: number;
+  createdAt: string;
 }
 
 interface User {
@@ -42,8 +43,11 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
     setSelectedMovie(null);
   };
 
-  // --- HERO SECTION: Cycle through featured movie trailers ---
-  const featuredMovies = movies.filter((m) => m.featured && (m.trailerUrl || m.videoUrl));
+  // --- HERO SECTION: Show the most current six featured movies with trailers ---
+  const featuredMovies = movies
+    .filter((m) => m.featured && (m.trailerUrl || m.videoUrl))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 6);
   const [currentHeroIdx, setCurrentHeroIdx] = useState(0);
   useEffect(() => {
     if (featuredMovies.length < 2) return;
@@ -190,7 +194,7 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
         <div className="relative w-full pt-2 pb-2">
           <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-10" />
           <div className="relative z-20">
-            <TrailerPlayer movie={featuredMovies[0]} />
+            <TrailerPlayer movie={heroMovie} />
           </div>
         </div>
       )}

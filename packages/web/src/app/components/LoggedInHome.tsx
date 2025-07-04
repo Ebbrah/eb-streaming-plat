@@ -69,15 +69,15 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
   // Filter movies to only those with allowed genres
   const filteredMovies = movies.filter(movie =>
     Array.isArray(movie.genre)
-      ? movie.genre.some(g => allowedGenres.includes(g))
-      : allowedGenres.includes(movie.genre)
+      ? movie.genre.some(g => typeof g === 'string' && allowedGenres.includes(g))
+      : typeof movie.genre === 'string' && allowedGenres.includes(movie.genre)
   );
 
   // Build genreMap only from filteredMovies and allowedGenres
   const genreMap: { [genre: string]: Movie[] } = {};
   filteredMovies.forEach((movie) => {
     (Array.isArray(movie.genre) ? movie.genre : [movie.genre]).forEach((g) => {
-      if (allowedGenres.includes(g)) {
+      if (typeof g === 'string' && allowedGenres.includes(g)) {
         if (!genreMap[g]) genreMap[g] = [];
         genreMap[g].push(movie);
       }

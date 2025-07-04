@@ -43,7 +43,14 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
     setSelectedMovie(null);
   };
 
+  // --- HERO SECTION: Show only the most recent featured movie with trailer ---
+  const mostRecentFeaturedMovie = movies
+    .filter((m) => m.featured && (m.trailerUrl || m.videoUrl))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())[0];
+
+  /*
   // --- HERO SECTION: Show the most current six featured movies with trailers ---
+  // (Commented out for now, can be restored later)
   const featuredMovies = movies
     .filter((m) => m.featured && (m.trailerUrl || m.videoUrl))
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
@@ -57,6 +64,9 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
     return () => clearInterval(interval);
   }, [featuredMovies.length]);
   const heroMovie = featuredMovies[currentHeroIdx];
+  */
+
+  const heroMovie = mostRecentFeaturedMovie;
 
   // Only display these genres
   const allowedGenres = [

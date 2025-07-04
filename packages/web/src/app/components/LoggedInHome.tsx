@@ -14,7 +14,7 @@ interface Movie {
   featured?: boolean;
   releaseYear?: number;
   rating?: number;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface User {
@@ -46,7 +46,7 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
   // --- HERO SECTION: Show the most current six featured movies with trailers ---
   const featuredMovies = movies
     .filter((m) => m.featured && (m.trailerUrl || m.videoUrl))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
     .slice(0, 6);
   const [currentHeroIdx, setCurrentHeroIdx] = useState(0);
   useEffect(() => {

@@ -16,6 +16,8 @@ interface NewAdminForm {
   name: string;
   email: string;
   password: string;
+  mobileNumber: string;
+  role: 'user' | 'admin';
 }
 
 export default function AdminManagement() {
@@ -25,6 +27,8 @@ export default function AdminManagement() {
     name: '',
     email: '',
     password: '',
+    mobileNumber: '',
+    role: 'user',
   });
   const [editingRoleUserId, setEditingRoleUserId] = useState<string | null>(null);
   const [newRole, setNewRole] = useState<'user' | 'admin'>('user');
@@ -84,7 +88,7 @@ export default function AdminManagement() {
       const data = await response.json();
       if (data.success) {
         toast.success('Admin created successfully');
-        setNewAdmin({ name: '', email: '', password: '' });
+        setNewAdmin({ name: '', email: '', password: '', mobileNumber: '', role: 'user' });
         fetchUsers();
       } else {
         toast.error(data.message || 'Error creating admin');
@@ -162,7 +166,7 @@ export default function AdminManagement() {
       {/* Create Admin Form */}
       <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
         <h2 className="text-xl font-semibold mb-4 text-gray-900">Create New Admin</h2>
-        <form onSubmit={handleCreateAdmin} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <form onSubmit={handleCreateAdmin} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
@@ -197,7 +201,29 @@ export default function AdminManagement() {
               required
             />
           </div>
-          <div className="md:col-span-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+            <input
+              type="text"
+              value={newAdmin.mobileNumber}
+              onChange={(e) => setNewAdmin({ ...newAdmin, mobileNumber: e.target.value })}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+              placeholder="Mobile Number"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select
+              value={newAdmin.role}
+              onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value as 'user' | 'admin' })}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
             <button 
               type="submit" 
               className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-semibold transition-colors"

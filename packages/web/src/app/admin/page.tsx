@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import MovieManagement from './components/MovieManagement';
 import AdminManagement from './components/AdminManagement';
+import Reports from './components/Reports';
 
 interface User {
   _id: string;
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
   const { user, isAuthenticated } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'movies' | 'admins'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'movies' | 'admins' | 'reports'>('users');
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') {
@@ -105,6 +106,16 @@ export default function AdminDashboard() {
             >
               Movies
             </button>
+            <button
+              onClick={() => setActiveTab('reports')}
+              className={`${
+                activeTab === 'reports'
+                  ? 'border-b-4 border-purple-500 text-purple-600 bg-gray-50'
+                  : 'border-b-4 border-transparent text-gray-500 hover:text-purple-500 hover:border-purple-400'
+              } whitespace-nowrap py-3 px-4 font-bold text-lg rounded-t-lg transition`}
+            >
+              Reports
+            </button>
           </nav>
         </div>
 
@@ -162,6 +173,8 @@ export default function AdminDashboard() {
             </div>
           ) : activeTab === 'admins' ? (
             <AdminManagement />
+          ) : activeTab === 'reports' ? (
+            <Reports />
           ) : (
             <MovieManagement />
           )}

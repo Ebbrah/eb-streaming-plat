@@ -108,10 +108,8 @@ export default function LandingPage({ featuredMovies = [] }: LandingPageProps) {
           <h2 className="text-xl md:text-2xl mb-4 font-medium" style={textStyle}>
             Christopher & Diana Mwakasege Foundation (CADF)
           </h2>
-          <p className="text-lg mb-6" style={textStyle}>
-            Jifunze neno la Mungu kupitia mafundisho ya Neno la Mungu kupitia kwa Mwl Christopher na Diana Mwakasege
-            <br />
-            yaliyofanyika katika semina na makongamano tofauti toka mwaka 1990
+          <p className="text-base mb-6" style={textStyle}>
+            Mafundisho ya neno La Mungu kupitia Semina na Makongamano kuanzia 1990-2025
           </p>
           <form onSubmit={handleGetStarted} className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-xl mx-auto">
             <input

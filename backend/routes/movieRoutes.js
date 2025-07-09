@@ -15,6 +15,9 @@ router.get('/', auth, requireActiveSubscription, MovieController.getAllMovies);
 // Get movie streaming URL (premium)
 router.get('/:movieId/stream', auth, requireActiveSubscription, MovieController.getStreamingUrl);
 
+// Public: Get featured movies (no auth required)
+router.get('/public/featured', MovieController.getPublicFeaturedMovies);
+
 // Delete movie (admin only)
 router.delete('/:movieId', auth, requireActiveSubscription, MovieController.deleteMovie);
 

@@ -101,6 +101,21 @@ class MovieController {
             res.status(500).json({ message: 'Error getting movies' });
         }
     }
+
+    // Public: Get featured movies (no auth required)
+    static async getPublicFeaturedMovies(req, res) {
+        try {
+            const movies = await Movie.find({ featured: true, thumbnailUrl: { $exists: true, $ne: null } }, '-videoKey');
+            // Sort by most recent
+            const sorted = movies.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            // Limit to 7 for landing page
+            const featuredMovies = sorted.slice(0, 7);
+            res.json({ success: true, data: featuredMovies });
+        } catch (error) {
+            console.error('Error getting public featured movies:', error);
+            res.status(500).json({ message: 'Error getting public featured movies' });
+        }
+    }
 }
 
 module.exports = MovieController; 

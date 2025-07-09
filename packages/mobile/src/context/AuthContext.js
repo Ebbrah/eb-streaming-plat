@@ -7,7 +7,7 @@ const AuthContext = createContext(null);
 
 // Create an Axios instance for non-authenticated requests
 const publicApi = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: `${API_URL}`,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -44,7 +44,7 @@ publicApi.interceptors.response.use(
 
 // Create an Axios instance for authenticated requests
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: `${API_URL}`,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -184,13 +184,13 @@ export const AuthProvider = ({ children }) => {
       };
       
       console.log('Registration request details:', {
-        url: `${API_URL}/users/register/user`,
+        url: `${API_URL}/users/register`,
         method: 'POST',
         headers: publicApi.defaults.headers,
         data: { ...requestData, password: '[REDACTED]' }
       });
 
-      const response = await publicApi.post('/users/register/user', requestData);
+      const response = await publicApi.post('/users/register', requestData);
 
       console.log('Registration response:', {
         status: response.status,
@@ -220,7 +220,7 @@ export const AuthProvider = ({ children }) => {
         response: error.response?.data,
         message: error.message,
         status: error.response?.status,
-        url: `${API_URL}/users/register/user`,
+        url: `${API_URL}/users/register`,
         headers: error.response?.headers,
         config: {
           url: error.config?.url,

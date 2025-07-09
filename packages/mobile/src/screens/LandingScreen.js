@@ -18,7 +18,7 @@ const LandingScreen = ({ navigation }) => {
   const fetchLandingFeaturedMovies = async () => {
     try {
       setError(null);
-      const response = await axios.get(`${API_URL}/api/movies`, {
+      const response = await axios.get(`${API_URL}/movies`, {
         timeout: 10000,
         headers: {
           'Accept': 'application/json',

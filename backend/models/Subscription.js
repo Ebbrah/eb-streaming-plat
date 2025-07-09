@@ -34,13 +34,13 @@ const subscriptionSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['mpesa', 'mix', 'temporary'],
-        default: 'temporary'
+        enum: ['mpesa', 'mix'],
+        default: 'mpesa'
     },
     paymentStatus: {
         type: String,
-        enum: ['pending', 'completed', 'failed', 'temporary'],
-        default: 'temporary'
+        enum: ['pending', 'completed', 'failed'],
+        default: 'pending'
     },
     paymentId: {
         type: String
@@ -76,11 +76,16 @@ subscriptionSchema.methods.isActive = function() {
     return this.status === 'active' && (!this.endDate || this.endDate > new Date());
 };
 
-// Method to calculate end date based on plan
+// Method to calculate end date based on plan, with test logic via env var
 subscriptionSchema.methods.calculateEndDate = function() {
     const startDate = this.startDate || new Date();
-    // For testing: set end date to 10 minutes from start
-    this.endDate = new Date(startDate.getTime() + 10 * 60 * 1000); // 10 minutes
+    if (process.env.ALLOW_TEST_SUBSCRIPTIONS === 'true' && process.env.TEST_SUBSCRIPTION_MINUTES) {
+        this.endDate = new Date(startDate.getTime() + parseInt(process.env.TEST_SUBSCRIPTION_MINUTES) * 60 * 1000);
+    } else if (this.plan === 'monthly') {
+        this.endDate = new Date(startDate.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days
+    } else if (this.plan === 'yearly') {
+        this.endDate = new Date(startDate.getTime() + (365 * 24 * 60 * 60 * 1000)); // 365 days
+    }
 };
 
 module.exports = mongoose.model('Subscription', subscriptionSchema); 

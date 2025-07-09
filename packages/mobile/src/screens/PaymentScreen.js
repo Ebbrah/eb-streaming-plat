@@ -14,6 +14,8 @@ import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { API_URL } from '../config';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 const PAYMENT_PROVIDERS = [
   {
@@ -30,11 +32,34 @@ const PAYMENT_PROVIDERS = [
   }
 ];
 
+const isTestEnabled = process.env.EXPO_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
+
+function createTestSubscription(token) {
+  fetch('https://api.manahuduma.com/api/subscription/test-create', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        Alert.alert('Success', 'Test subscription created!');
+        // Optionally, refresh user/subscription state here
+      } else {
+        Alert.alert('Error', data.message || 'Failed to create test subscription');
+      }
+    })
+    .catch(() => Alert.alert('Error', 'Network error'));
+}
+
 const PaymentScreen = ({ navigation, route }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const authContext = useContext(AuthContext);
 
   useEffect(() => {
     checkSubscriptionStatus();
@@ -43,7 +68,7 @@ const PaymentScreen = ({ navigation, route }) => {
   const checkSubscriptionStatus = async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/api/payments/subscription`,
+        `${API_URL}/payments/subscription`,
         {
           headers: {
             'Authorization': `Bearer ${user.token}`,
@@ -69,7 +94,7 @@ const PaymentScreen = ({ navigation, route }) => {
     try {
       setLoading(true);
       const response = await axios.post(
-        `${API_URL}/api/payments/${provider}`,
+        `${API_URL}/payments/${provider}`,
         {
           amount: 5.99,
           phoneNumber,
@@ -126,7 +151,7 @@ const PaymentScreen = ({ navigation, route }) => {
     try {
       setLoading(true);
       const response = await axios.post(
-        `${API_URL}/api/payments/verify`,
+        `${API_URL}/payments/verify`,
         {
           paymentId,
           provider
@@ -171,7 +196,7 @@ const PaymentScreen = ({ navigation, route }) => {
     try {
       setLoading(true);
       const response = await axios.post(
-        `${API_URL}/api/payments/subscription/cancel`,
+        `${API_URL}/payments/subscription/cancel`,
         {},
         {
           headers: {
@@ -247,6 +272,13 @@ const PaymentScreen = ({ navigation, route }) => {
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#6A0DAD" />
             </View>
+          )}
+
+          {isTestEnabled && (
+            <Button
+              title="Continue without payment (Test)"
+              onPress={() => createTestSubscription(authContext.token)}
+            />
           )}
         </View>
       </ScrollView>

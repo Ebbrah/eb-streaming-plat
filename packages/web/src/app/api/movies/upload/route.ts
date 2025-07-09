@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const formData = await request.formData();
+    const formData = await request.formData() as FormData;
     const video = formData.get('video') as File;
     const thumbnail = formData.get('thumbnail') as File;
     

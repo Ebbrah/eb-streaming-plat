@@ -1,0 +1,23 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-mana-dev-d4b84-authRole",
+      "UnauthRoleArn": "arn:aws:iam::066506852370:role/amplify-mana-dev-d4b84-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::066506852370:role/amplify-mana-dev-d4b84-authRole",
+      "Region": "us-west-1",
+      "DeploymentBucketName": "amplify-mana-dev-d4b84-deployment",
+      "UnauthRoleName": "amplify-mana-dev-d4b84-unauthRole",
+      "StackName": "amplify-mana-dev-d4b84",
+      "StackId": "arn:aws:cloudformation:us-west-1:066506852370:stack/amplify-mana-dev-d4b84/632c2ec0-5a0d-11f0-a125-06d52c629cb5",
+      "AmplifyAppId": "ddsmpysv9hzw6"
+    },
+    "categories": {
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "ddsmpysv9hzw6",
+          "type": "manual"
+        }
+      }
+    }
+  }
+}

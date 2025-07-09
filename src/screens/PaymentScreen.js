@@ -1,0 +1,6 @@
+import { API_URL } from '../config';
+
+// ... existing code ...
+// Update all payment endpoints to use API_URL directly
+// Example: `${API_URL}/payments/verify` instead of `${API_URL}/api/payments/verify`
+// ... existing code ... 

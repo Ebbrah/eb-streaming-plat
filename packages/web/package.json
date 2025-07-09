@@ -11,6 +11,7 @@
     "postinstall": "next build"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.842.0",
     "@heroicons/react": "^2.1.1",
     "@mana/shared": "file:../shared",
     "@stripe/stripe-js": "^2.4.0",

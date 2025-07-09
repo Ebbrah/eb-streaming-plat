@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../config';
 
 export default function AuthScreen({ navigation }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,7 +11,7 @@ export default function AuthScreen({ navigation }) {
 
   const handleAuth = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/' + (isLogin ? 'login' : 'register'), {
+      const response = await fetch(`${API_URL}/auth/` + (isLogin ? 'login' : 'register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

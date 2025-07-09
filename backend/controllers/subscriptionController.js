@@ -59,6 +59,67 @@ class SubscriptionController {
         }
     }
 
+    // TEST ONLY: Create a test subscription (short-lived)
+    static async createTestSubscription(req, res) {
+        try {
+            if (process.env.ALLOW_TEST_SUBSCRIPTIONS !== 'true') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Test subscriptions are not enabled.'
+                });
+            }
+
+            const userId = req.user.userId;
+
+            // Check if user already has an active subscription
+            let existingSubscription = await Subscription.findOne({ 
+                userId, 
+                status: { $in: ['active', 'pending'] } 
+            });
+
+            if (existingSubscription) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'User already has an active subscription'
+                });
+            }
+
+            // Create new test subscription
+            const subscription = new Subscription({
+                userId,
+                plan: 'monthly',
+                paymentMethod: 'test',
+                status: 'active',
+                paymentStatus: 'completed',
+                startDate: new Date()
+            });
+
+            // Calculate end date using test logic
+            subscription.calculateEndDate();
+            await subscription.save();
+
+            res.status(201).json({
+                success: true,
+                message: 'Test subscription created successfully',
+                data: {
+                    id: subscription._id,
+                    status: subscription.status,
+                    plan: subscription.plan,
+                    startDate: subscription.startDate,
+                    endDate: subscription.endDate,
+                    paymentMethod: subscription.paymentMethod,
+                    paymentStatus: subscription.paymentStatus
+                }
+            });
+        } catch (error) {
+            console.error('Test subscription creation error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error creating test subscription'
+            });
+        }
+    }
+
     // Get subscription status
     static async getSubscriptionStatus(req, res) {
         try {

@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { API_URL } from '../config';
+import axios from 'axios';
 
 export default function LandingScreen({ navigation }) {
   return (

@@ -25,6 +25,15 @@ router.post('/create', auth, async (req, res, next) => {
     }
 });
 
+// TEST ONLY: Create a test subscription (protected)
+router.post('/test-create', auth, async (req, res, next) => {
+    try {
+        await SubscriptionController.createTestSubscription(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
+
 // Get subscription status (protected)
 router.get('/status', auth, async (req, res, next) => {
     try {

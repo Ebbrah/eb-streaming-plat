@@ -1,0 +1,15 @@
+{
+  "providers": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-mana-dev-1302c-authRole",
+      "UnauthRoleArn": "arn:aws:iam::066506852370:role/amplify-mana-dev-1302c-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::066506852370:role/amplify-mana-dev-1302c-authRole",
+      "Region": "us-west-1",
+      "DeploymentBucketName": "amplify-mana-dev-1302c-deployment",
+      "UnauthRoleName": "amplify-mana-dev-1302c-unauthRole",
+      "StackName": "amplify-mana-dev-1302c",
+      "StackId": "arn:aws:cloudformation:us-west-1:066506852370:stack/amplify-mana-dev-1302c/67875580-5c10-11f0-8f5a-064d81151363",
+      "AmplifyAppId": "d2zycv111x21le"
+    }
+  }
+}

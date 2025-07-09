@@ -3,17 +3,19 @@ const router = express.Router();
 const MovieController = require('../controllers/movieController');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const auth = require('../middleware/auth');
+const requireActiveSubscription = require('../middleware/subscription');
 
 // Create a new movie (admin only)
-router.post('/', upload.single('video'), MovieController.createMovie);
+router.post('/', auth, requireActiveSubscription, upload.single('video'), MovieController.createMovie);
 
-// Get all movies
-router.get('/', MovieController.getAllMovies);
+// Get all movies (premium)
+router.get('/', auth, requireActiveSubscription, MovieController.getAllMovies);
 
-// Get movie streaming URL
-router.get('/:movieId/stream', MovieController.getStreamingUrl);
+// Get movie streaming URL (premium)
+router.get('/:movieId/stream', auth, requireActiveSubscription, MovieController.getStreamingUrl);
 
 // Delete movie (admin only)
-router.delete('/:movieId', MovieController.deleteMovie);
+router.delete('/:movieId', auth, requireActiveSubscription, MovieController.deleteMovie);
 
 module.exports = router; 

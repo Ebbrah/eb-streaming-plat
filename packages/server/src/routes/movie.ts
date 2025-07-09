@@ -564,4 +564,29 @@ router.get('/search', async (req: MovieQuery, res: Response) => {
   }
 });
 
+// Public endpoint: Get first 7 featured movies (thumbnails and trailers only)
+router.get('/public/featured', async (req: Request, res: Response) => {
+  try {
+    const featuredMovies = await Movie.find({ 
+      featured: true, 
+      thumbnailUrl: { $exists: true, $ne: '' },
+      trailerUrl: { $exists: true, $ne: '' }
+    })
+    .sort({ createdAt: -1 })
+    .limit(7)
+    .select('title _id thumbnailUrl trailerUrl');
+
+    res.json({
+      success: true,
+      data: featuredMovies
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching public featured movies',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export default router; 

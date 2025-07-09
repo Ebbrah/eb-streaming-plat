@@ -61,17 +61,78 @@ const HomeScreen = ({ navigation }) => {
       setLoading(true);
       setError(null);
       
-      let allFetchedMovies = [];
-      let currentPage = 1;
-      let totalPages = 1;
+      if (user) {
+        console.log('Mobile HomeScreen: Authenticated, fetching all movies...');
+        // User is authenticated - fetch full movies
+        let allFetchedMovies = [];
+        let currentPage = 1;
+        let totalPages = 1;
 
-      while (currentPage <= totalPages) {
-        const response = await axios.get(`${API_URL}/api/movies`, {
-          params: {
-            page: currentPage,
-            limit: 10
-          },
-          timeout: 15000, // 15 second timeout
+        while (currentPage <= totalPages) {
+          const response = await axios.get(`${API_URL}/movies`, {
+            params: {
+              page: currentPage,
+              limit: 10
+            },
+            timeout: 15000, // 15 second timeout
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          const data = response.data;
+          
+          if (data.success) {
+            // Only set featured movie once from the first page
+            if (currentPage === 1) {
+              const featuredMovies = data.featuredMovies || [];
+              if (featuredMovies.length > 0) {
+                setFeaturedMovie(featuredMovies[0]);
+              }
+            }
+            
+            allFetchedMovies = [...allFetchedMovies, ...(data.data || [])];
+            totalPages = data.pagination.pages;
+            currentPage++;
+          } else {
+            setError(data.message || 'Failed to fetch movies');
+            break;
+          }
+        }
+
+        setMovies(allFetchedMovies);
+
+        // Restore genre grouping logic
+        const preferredGenreCasing = {};
+        GENRE_ORDER.forEach(genre => {
+          preferredGenreCasing[genre.toLowerCase()] = genre;
+        });
+
+        const groupedMovies = allFetchedMovies.reduce((acc, movie) => {
+          const genres = Array.isArray(movie.genre) ? movie.genre : [movie.genre];
+          
+          genres.forEach(genre => {
+            const normalizedGenre = genre.toLowerCase();
+            const displayGenre = preferredGenreCasing[normalizedGenre] || genre;
+
+            if (!acc[displayGenre]) {
+              acc[displayGenre] = [];
+            }
+            acc[displayGenre].push({
+              ...movie,
+              movieId: movie._id 
+            });
+          });
+          
+          return acc;
+        }, {});
+        setMoviesByGenre(groupedMovies);
+      } else {
+        console.log('Mobile HomeScreen: Unauthenticated, fetching public featured movies...');
+        // User is not authenticated - fetch only public featured movies
+        const response = await axios.get(`${API_URL}/movies/public/featured`, {
+          timeout: 15000,
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -79,52 +140,19 @@ const HomeScreen = ({ navigation }) => {
         });
         
         const data = response.data;
+        console.log('Mobile HomeScreen: Public featured movies response:', data);
         
         if (data.success) {
-          // Only set featured movie once from the first page
-          if (currentPage === 1) {
-            const featuredMovies = data.featuredMovies || [];
-            if (featuredMovies.length > 0) {
-              setFeaturedMovie(featuredMovies[0]);
-            }
+          const featuredMovies = data.data || [];
+          if (featuredMovies.length > 0) {
+            setFeaturedMovie(featuredMovies[0]);
           }
-          
-          allFetchedMovies = [...allFetchedMovies, ...(data.data || [])];
-          totalPages = data.pagination.pages;
-          currentPage++;
+          setMovies([]); // No full movies for unauthenticated users
+          setMoviesByGenre({}); // No genre grouping for unauthenticated users
         } else {
-          setError(data.message || 'Failed to fetch movies');
-          break;
+          setError(data.message || 'Failed to fetch featured movies');
         }
       }
-
-      setMovies(allFetchedMovies);
-
-      // Restore genre grouping logic
-      const preferredGenreCasing = {};
-      GENRE_ORDER.forEach(genre => {
-        preferredGenreCasing[genre.toLowerCase()] = genre;
-      });
-
-      const groupedMovies = allFetchedMovies.reduce((acc, movie) => {
-        const genres = Array.isArray(movie.genre) ? movie.genre : [movie.genre];
-        
-        genres.forEach(genre => {
-          const normalizedGenre = genre.toLowerCase();
-          const displayGenre = preferredGenreCasing[normalizedGenre] || genre;
-
-          if (!acc[displayGenre]) {
-            acc[displayGenre] = [];
-          }
-          acc[displayGenre].push({
-            ...movie,
-            movieId: movie._id 
-          });
-        });
-        
-        return acc;
-      }, {});
-      setMoviesByGenre(groupedMovies);
 
     } catch (err) {
       console.error('Error fetching movies:', {

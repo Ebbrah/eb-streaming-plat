@@ -11,10 +11,19 @@
     "android-tv": "yarn workspace @mana/android-tv start",
     "server": "yarn workspace @mana/server start",
     "dev": "concurrently \"yarn server\" \"yarn web\"",
-    "start": "next start"
+    "start": "next start",
+    "build": "npx expo export"
   },
   "devDependencies": {
+    "@types/react-dom": "^19",
+    "@types/react-native-web": "^0",
     "concurrently": "^8.2.0"
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "yarn@4.9.2",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.842.0",
+    "@expo/metro-runtime": "~5.0.4",
+    "react-dom": "19.0.0",
+    "react-native-web": "^0.20.0"
+  }
 }

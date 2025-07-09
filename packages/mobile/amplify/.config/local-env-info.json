@@ -1,5 +1,6 @@
 {
   "projectPath": "/Users/guru/Documents/Mana/packages/mobile",
+  "envName": "dev",
   "defaultEditor": "vscode",
-  "envName": "dev"
+  "noUpdateBackend": false
 }

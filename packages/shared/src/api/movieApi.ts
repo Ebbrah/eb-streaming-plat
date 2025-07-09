@@ -28,13 +28,21 @@ export const movieApi = {
   async getMovies(limit: number = 1000, isAuthenticated: boolean = true): Promise<MovieResponse> {
     try {
       let url;
+      let headers: Record<string, string> = {};
       if (isAuthenticated) {
         url = `${API_URL}/api/movies?limit=${limit}`;
+        // Attach Authorization header if token exists
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('token');
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+        }
       } else {
         url = `${API_URL}/api/movies/public/featured`;
       }
       console.log('Fetching movies from:', url);
-      const response = await fetchWithTimeout(url);
+      const response = await fetchWithTimeout(url, { headers });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

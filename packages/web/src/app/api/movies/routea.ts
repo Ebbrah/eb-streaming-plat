@@ -1,3 +1,7 @@
+// This route is disabled to prevent unauthorized /api/movies calls that cause 401 errors for unauthenticated users.
+// If you need to re-enable, ensure proper authentication and public access logic.
+
+/*
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 
@@ -97,3 +101,4 @@ export async function POST(request: Request) {
     );
   }
 } 
+*/ 

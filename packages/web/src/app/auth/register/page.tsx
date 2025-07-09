@@ -1,12 +1,24 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import toast from 'react-hot-toast';
 
-function RegisterForm() {
+function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [error, setError] = useState<Error | null>(null);
+  if (error) {
+    return <div className="text-red-600 p-4">Registration error: {error.message}</div>;
+  }
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      {React.cloneElement(children as React.ReactElement, { onError: setError })}
+    </React.Suspense>
+  );
+}
+
+function RegisterForm({ onError }: { onError?: (e: Error) => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { register } = useAuth();
@@ -29,11 +41,13 @@ function RegisterForm() {
     setIsLoading(true);
 
     try {
-      await register(formData.name, formData.email, formData.password);
+      const result = await register(formData.name, formData.email, formData.password);
+      console.log('Registration result:', result);
       toast.success('Account created successfully!');
       router.push('/');
     } catch (error: any) {
       console.error('Registration error:', error);
+      if (onError) onError(error);
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
                           error.message || 
@@ -125,8 +139,8 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <ErrorBoundary>
       <RegisterForm />
-    </Suspense>
+    </ErrorBoundary>
   );
 } 

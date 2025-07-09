@@ -115,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (name: string, email: string, password: string) => {
     try {
+      console.log('Auth: Starting registration for:', email);
       const response = await fetch('/api/users/register/user', {
         method: 'POST',
         headers: {
@@ -124,15 +125,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       const data = await response.json();
-      if (data.success) {
+      console.log('Auth: Registration response:', { status: response.status, success: data.success });
+      
+      if (data.success && data.data && data.data.token && data.data.user) {
+        console.log('Auth: Registration successful, setting token and user');
         localStorage.setItem('token', data.data.token);
         setUser(data.data.user);
-        router.push('/');
+        
+        // Small delay to ensure state is updated before redirect
+        setTimeout(() => {
+          console.log('Auth: Redirecting after registration');
+          router.push('/');
+        }, 100);
+        
+        return data;
       } else {
-        throw new Error(data.message || 'Registration failed');
+        console.error('Auth: Registration failed - invalid response structure:', data);
+        throw new Error(data.message || 'Registration failed - invalid response');
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Auth: Registration error:', error);
       throw error;
     }
   };

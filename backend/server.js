@@ -7,12 +7,23 @@ require('dotenv').config();
 const app = express();
 
 // CORS configuration
-const corsOptions = {
-    origin: '*', // Allow all origins in development
+const allowedOrigins = [
+    'https://dev.d2p8wvtipiaw4e.amplifyapp.com',
+    'http://localhost:19006', // or your local dev URL
+  ];
+  
+  const corsOptions = {
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
-};
+  };
 
 // Middleware
 app.use(cors(corsOptions));

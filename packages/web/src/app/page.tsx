@@ -19,13 +19,23 @@ export default function HomePage() {
       const fetchMovies = async () => {
         try {
           console.log('HomePage: Fetching movies...');
-          const response = await movieApi.getMovies();
+          
+          const response = await movieApi.getMovies(1000, isAuthenticated);
           console.log('HomePage: Movies fetch response:', response);
-          if (response.success) {
-            setMovies(response.data);
-            setFeaturedMovies(response.featuredMovies || []);
+          if (isAuthenticated) {
+            if (response.success) {
+              setMovies(response.data);
+              setFeaturedMovies(response.featuredMovies || []);
+            } else {
+              setError(response.message || 'Failed to fetch movies');
+            }
           } else {
-            setError(response.message || 'Failed to fetch movies');
+            if (response.success) {
+              setFeaturedMovies(response.data || []);
+              setMovies([]); // No full movies for unauthenticated users
+            } else {
+              setError(response.message || 'Failed to fetch featured movies');
+            }
           }
         } catch (error) {
           console.error('HomePage: Error fetching movies:', error);
@@ -36,7 +46,7 @@ export default function HomePage() {
       };
       fetchMovies();
     }
-  }, [authLoading]);
+  }, [authLoading, isAuthenticated]);
 
   if (loading || authLoading) {
     console.log('[DIAG] HomePage: Loading...');

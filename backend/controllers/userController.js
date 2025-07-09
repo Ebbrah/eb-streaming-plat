@@ -45,7 +45,7 @@ class UserController {
 
             // Generate JWT token
             const token = jwt.sign(
-                { userId: user._id, role: user.role },
+                { userId: user._id, role: user.role, isSuperAdmin: user.isSuperAdmin },
                 process.env.JWT_SECRET || 'your-secret-key',
                 { expiresIn: '24h' }
             );
@@ -103,7 +103,7 @@ class UserController {
 
             // Generate JWT token
             const token = jwt.sign(
-                { userId: user._id, role: user.role },
+                { userId: user._id, role: user.role, isSuperAdmin: user.isSuperAdmin },
                 process.env.JWT_SECRET || 'your-secret-key',
                 { expiresIn: '24h' }
             );

@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const formData = await request.formData() as FormData;
+    const formData = await request.formData() as any;
     const video = formData.get('video') as File;
     const thumbnail = formData.get('thumbnail') as File;
     

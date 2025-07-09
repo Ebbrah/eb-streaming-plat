@@ -1,6 +1,10 @@
 const Subscription = require('../models/Subscription');
 
 module.exports = async function requireActiveSubscription(req, res, next) {
+  // Allow admins and superadmins to bypass subscription check
+  if (req.user && (req.user.role === 'admin' || req.user.isSuperAdmin)) {
+    return next();
+  }
   try {
     const userId = req.user && req.user.userId;
     if (!userId) {

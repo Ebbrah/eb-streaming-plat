@@ -58,14 +58,14 @@ export default function HomePage() {
     console.error('[DIAG] HomePage: Error state:', error);
     return <div className="text-red-500 text-center py-8">{error}</div>;
   }
+  if (!isAuthenticated) {
+    return <LandingPage featuredMovies={featuredMovies} />;
+  }
   if (!movies.length) {
     console.warn('[DIAG] HomePage: Movies array is empty or not set:', movies);
     return <div className="text-gray-400 text-center py-8">No movies found.</div>;
   }
 
-  if (!isAuthenticated) {
-    return <LandingPage featuredMovies={featuredMovies} />;
-  }
   return (
     <>
       <LoggedInHome movies={movies} user={user || undefined} />

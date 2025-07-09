@@ -1,3 +1,4 @@
+// Added comment to trigger git change
 import { Movie, MovieResponse } from '../types/movie';
 
 // Use environment variable or fallback to deployed backend URL

@@ -25,10 +25,16 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
 };
 
 export const movieApi = {
-  async getMovies(limit: number = 1000): Promise<MovieResponse> {
+  async getMovies(limit: number = 1000, isAuthenticated: boolean = true): Promise<MovieResponse> {
     try {
-      console.log('Fetching movies from:', `${API_URL}/api/movies?limit=${limit}`);
-      const response = await fetchWithTimeout(`${API_URL}/api/movies?limit=${limit}`);
+      let url;
+      if (isAuthenticated) {
+        url = `${API_URL}/api/movies?limit=${limit}`;
+      } else {
+        url = `${API_URL}/api/movies/public/featured`;
+      }
+      console.log('Fetching movies from:', url);
+      const response = await fetchWithTimeout(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

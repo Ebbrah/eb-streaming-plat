@@ -69,6 +69,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkAuth = async () => {
+    // Debug: log when checkAuth runs and what token is found
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line no-console
+      console.log('[DEBUG] checkAuth called. Token in localStorage:', localStorage.getItem('token'));
+    }
     try {
       const token = localStorage.getItem('token');
       if (!token) {

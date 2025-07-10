@@ -1,3 +1,4 @@
+"use client";
 import { useContext } from 'react';
 // import { AuthContext } from '...'; // Uncomment and fix path if you use context
 import { useAuth } from '@/lib/auth';

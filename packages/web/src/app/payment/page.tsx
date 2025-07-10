@@ -160,8 +160,8 @@ function PaymentPage() {
                 if (data.success && data.data && data.data.token && data.data.user) {
                   const token = data.data.token;
                   localStorage.setItem('token', token);
-                  // 2. Call test subscription endpoint
-                  const testResp = await fetch('/api/subscription/test-create', {
+                  // 2. Call test subscription endpoint (corrected path)
+                  const testResp = await fetch('/api/subscriptions/test-create', {
                     method: 'POST',
                     headers: {
                       'Authorization': `Bearer ${token}`,
@@ -171,15 +171,22 @@ function PaymentPage() {
                   const testData = await testResp.json();
                   if (testData.success) {
                     setPendingRegistrationForm(null);
-                    router.push('/');
+                    // Force reload to ensure AuthContext picks up new token
+                    window.location.href = '/';
                   } else {
                     setError(testData.message || 'Test subscription failed');
                   }
                 } else {
-                  setError(data.message || 'Registration failed after payment');
+                  setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');
                 }
               } catch (err) {
-                setError('Network error during registration');
+                let errorMsg = 'Network error during registration';
+                if (err && typeof err === 'object' && 'message' in err) {
+                  errorMsg = (err as any).message;
+                } else if (typeof err === 'string') {
+                  errorMsg = err;
+                }
+                setError(errorMsg);
               }
               setLoading(false);
             }}

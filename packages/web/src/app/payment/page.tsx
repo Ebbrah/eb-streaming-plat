@@ -90,7 +90,7 @@ function PaymentPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold" style={{ color: '#6A0DAD' }}>
             Choose Payment Method
           </h2>
           <p className="text-center text-gray-600 mb-4">
@@ -114,9 +114,7 @@ function PaymentPage() {
               onClick={async () => {
                 setError(null);
                 setLoading(true);
-                // Simulate payment logic (replace with real payment integration)
                 setTimeout(async () => {
-                  // After payment, send registration data to backend
                   try {
                     const response = await fetch('/api/users/register/user', {
                       method: 'POST',
@@ -145,43 +143,49 @@ function PaymentPage() {
               </span>
             </button>
           ))}
-          {isTestEnabled && (
-            <button
-              className="w-full py-2 px-4 mt-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              onClick={async () => {
-                setError(null);
-                setLoading(true);
-                // After payment, send registration data to backend (test mode)
-                try {
-                  const response = await fetch('/api/users/register/user', {
+          <button
+            className="w-full py-2 px-4 mt-4 border border-transparent text-sm font-medium rounded-md text-white"
+            style={{ backgroundColor: '#6A0DAD' }}
+            onClick={async () => {
+              setError(null);
+              setLoading(true);
+              try {
+                // 1. Register user and get token
+                const response = await fetch('/api/users/register/user', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ...pendingRegistrationForm, phoneNumber }),
+                });
+                const data = await response.json();
+                if (data.success && data.data && data.data.token && data.data.user) {
+                  const token = data.data.token;
+                  localStorage.setItem('token', token);
+                  // 2. Call test subscription endpoint
+                  const testResp = await fetch('/api/subscription/test-create', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...pendingRegistrationForm, phoneNumber }),
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
                   });
-                  const data = await response.json();
-                  if (data.success && data.data && data.data.token && data.data.user) {
-                    localStorage.setItem('token', data.data.token);
+                  const testData = await testResp.json();
+                  if (testData.success) {
                     setPendingRegistrationForm(null);
                     router.push('/');
                   } else {
-                    setError(data.message || 'Registration failed after payment');
+                    setError(testData.message || 'Test subscription failed');
                   }
-                } catch (err) {
-                  setError('Network error during registration');
+                } else {
+                  setError(data.message || 'Registration failed after payment');
                 }
-                setLoading(false);
-              }}
-              disabled={loading}
-            >
-              {loading ? 'Processing...' : '🧪 Continue without payment (TEST MODE)'}
-            </button>
-          )}
-          <button
-            className="w-full py-2 px-4 mt-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200"
-            onClick={logout}
+              } catch (err) {
+                setError('Network error during registration');
+              }
+              setLoading(false);
+            }}
             disabled={loading}
           >
-            Cancel / Logout
+            {loading ? 'Processing...' : 'Continue without payment'}
           </button>
           {loading && (
             <div className="flex justify-center mt-4">

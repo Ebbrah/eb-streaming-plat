@@ -15,7 +15,7 @@ const publicApi = axios.create({
   validateStatus: function (status) {
     return status >= 200 && status < 500;
   },
-  timeout: 10000 // 10 second timeout
+  timeout: 30000 // 30 second timeout
 });
 
 // Add response interceptor for debugging
@@ -49,7 +49,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
-  timeout: 10000 // 10 second timeout
+  timeout: 30000 // 30 second timeout
 });
 
 // Add response interceptor for debugging
@@ -94,6 +94,25 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pendingRegistration, setPendingRegistration] = useState(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+
+  const checkSubscriptionStatus = async (token) => {
+    try {
+      const response = await api.get('/subscriptions/status');
+      if (response.data.success) {
+        const subscription = response.data.data;
+        setSubscriptionStatus(subscription);
+        return subscription && subscription.status === 'active';
+      }
+      setSubscriptionStatus(null);
+      return false;
+    } catch (error) {
+      setSubscriptionStatus(null);
+      console.log('Subscription check failed:', error.response?.data || error.message);
+      return false;
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -103,7 +122,7 @@ export const AuthProvider = ({ children }) => {
           const response = await api.get('/users/profile');
           if (response.data.success) {
             const backendUser = response.data.data;
-            setUser({
+            const userObj = {
               id: backendUser.id,
               email: backendUser.email,
               firstName: backendUser.name.split(' ')[0],
@@ -111,19 +130,24 @@ export const AuthProvider = ({ children }) => {
               isAdmin: backendUser.role === 'admin',
               isSuperAdmin: backendUser.isSuperAdmin || false,
               token: storedToken
-            });
+            };
+            setUser(userObj);
+            await checkSubscriptionStatus(storedToken);
           } else {
             await AsyncStorage.removeItem('authToken');
             setUser(null);
+            setSubscriptionStatus(null);
           }
         } else {
           setUser(null);
+          setSubscriptionStatus(null);
         }
       } catch (error) {
         console.error('Auth check error:', error.response?.data || error.message);
         setError(error.message);
         await AsyncStorage.removeItem('authToken');
         setUser(null);
+        setSubscriptionStatus(null);
       } finally {
         setIsLoading(false);
       }
@@ -142,7 +166,7 @@ export const AuthProvider = ({ children }) => {
       if (response.data.success) {
         const { token, user: backendUser } = response.data.data;
         await AsyncStorage.setItem('authToken', token);
-        setUser({
+        const userObj = {
           id: backendUser.id,
           email: backendUser.email,
           firstName: backendUser.name.split(' ')[0],
@@ -150,15 +174,20 @@ export const AuthProvider = ({ children }) => {
           isAdmin: backendUser.role === 'admin',
           isSuperAdmin: backendUser.isSuperAdmin || false,
           token
-        });
+        };
+        setUser(userObj);
+        await checkSubscriptionStatus(token);
+        
         return { success: true, user: backendUser };
       } else {
         setError(response.data.message || 'Login failed.');
+        setSubscriptionStatus(null);
         return { success: false, error: response.data.message || 'Login failed.' };
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'An unexpected error occurred during login.';
       setError(errorMessage);
+      setSubscriptionStatus(null);
       return { success: false, error: errorMessage };
     }
   };
@@ -168,6 +197,8 @@ export const AuthProvider = ({ children }) => {
       await AsyncStorage.removeItem('authToken');
       setUser(null);
       setError(null);
+      setPendingRegistration(null);
+      setSubscriptionStatus(null);
     } catch (error) {
       console.error('Error during logout:', error);
       setError(error.message);
@@ -201,16 +232,22 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success) {
         const { token, user: backendUser } = response.data.data;
-        await AsyncStorage.setItem('authToken', token);
-        setUser({
+        
+        // Store registration data with token but don't log in yet
+        const pendingUser = {
           id: backendUser.id,
           email: backendUser.email,
           firstName: backendUser.name.split(' ')[0],
           lastName: backendUser.name.split(' ').slice(1).join(' '),
           isAdmin: backendUser.role === 'admin',
-          isSuperAdmin: backendUser.isSuperAdmin || false
-        });
-        return { success: true, user: backendUser };
+          isSuperAdmin: backendUser.isSuperAdmin || false,
+          token // Store the token for payment processing
+        };
+        
+        console.log('Setting pendingRegistration:', pendingUser);
+        setPendingRegistration(pendingUser);
+        
+        return { success: true, user: backendUser, token };
       } else {
         console.error('Registration failed:', response.data);
         return { success: false, error: response.data.message || 'Registration failed.' };
@@ -235,8 +272,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const completeRegistration = async () => {
+    console.log('completeRegistration called with pendingRegistration:', pendingRegistration);
+    if (pendingRegistration) {
+      console.log('Setting user from pendingRegistration');
+      setUser(pendingRegistration);
+      setPendingRegistration(null);
+      await AsyncStorage.setItem('authToken', pendingRegistration.token);
+      console.log('Registration completed, user logged in');
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, error, signIn, signOut, signUp }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isLoading, 
+      error, 
+      signIn, 
+      signOut, 
+      signUp, 
+      pendingRegistration,
+      completeRegistration,
+      subscriptionStatus,
+      checkSubscriptionStatus
+    }}>
       {children}
     </AuthContext.Provider>
   );

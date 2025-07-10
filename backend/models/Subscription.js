@@ -34,8 +34,8 @@ const subscriptionSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['mpesa', 'mix'],
-        default: 'mpesa'
+        enum: ["mpesa", "card", "test"], // Added "test" for test subscriptions
+        required: true,
     },
     paymentStatus: {
         type: String,

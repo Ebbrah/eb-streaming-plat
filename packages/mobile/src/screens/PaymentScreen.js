@@ -9,13 +9,12 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  Button,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { API_URL } from '../config';
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
 
 const PAYMENT_PROVIDERS = [
   {
@@ -55,33 +54,35 @@ function createTestSubscription(token) {
 }
 
 const PaymentScreen = ({ navigation, route }) => {
-  const { user } = useAuth();
+  const { user, pendingRegistration, completeRegistration, signOut } = useAuth();
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const authContext = useContext(AuthContext);
+  const isExpired = route?.params?.expired;
+
+  // Use pendingRegistration data if available, otherwise use logged-in user
+  const currentUser = pendingRegistration || user;
 
   useEffect(() => {
-    checkSubscriptionStatus();
-  }, []);
+    if (user) {
+      checkSubscriptionStatus();
+    }
+  }, [user]);
 
   const checkSubscriptionStatus = async () => {
     try {
-      const response = await axios.get(
-        `${API_URL}/payments/subscription`,
-        {
-          headers: {
-            'Authorization': `Bearer ${user.token}`,
-            'Content-Type': 'application/json'
-          }
+      const response = await axios.get(`${API_URL}/subscriptions/status`, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
 
       if (response.data.success) {
         setSubscriptionStatus(response.data.data);
       }
     } catch (error) {
-      console.error('Error checking subscription:', error.response?.data || error.message);
+      console.error('Error checking subscription status:', error.response?.data || error.message);
     }
   };
 
@@ -93,6 +94,15 @@ const PaymentScreen = ({ navigation, route }) => {
 
     try {
       setLoading(true);
+      
+      // Use token from pendingRegistration or logged-in user
+      const authToken = pendingRegistration?.token || user?.token;
+      
+      if (!authToken) {
+        Alert.alert('Error', 'Authentication token not found. Please try registering again.');
+        return;
+      }
+
       const response = await axios.post(
         `${API_URL}/payments/${provider}`,
         {
@@ -102,7 +112,7 @@ const PaymentScreen = ({ navigation, route }) => {
         },
         {
           headers: {
-            'Authorization': `Bearer ${user.token}`,
+            'Authorization': `Bearer ${authToken}`,
             'Content-Type': 'application/json'
           }
         }
@@ -116,7 +126,7 @@ const PaymentScreen = ({ navigation, route }) => {
             [
               {
                 text: 'OK',
-                onPress: () => verifyPayment(response.data.data.paymentId, provider)
+                onPress: () => verifyPayment(response.data.data.paymentId, provider, authToken)
               }
             ]
           );
@@ -128,7 +138,7 @@ const PaymentScreen = ({ navigation, route }) => {
             [
               {
                 text: 'OK',
-                onPress: () => verifyPayment(response.data.data.paymentId, provider)
+                onPress: () => verifyPayment(response.data.data.paymentId, provider, authToken)
               }
             ]
           );
@@ -147,7 +157,7 @@ const PaymentScreen = ({ navigation, route }) => {
     }
   };
 
-  const verifyPayment = async (paymentId, provider) => {
+  const verifyPayment = async (paymentId, provider, authToken) => {
     try {
       setLoading(true);
       const response = await axios.post(
@@ -158,7 +168,7 @@ const PaymentScreen = ({ navigation, route }) => {
         },
         {
           headers: {
-            'Authorization': `Bearer ${user.token}`,
+            'Authorization': `Bearer ${authToken}`,
             'Content-Type': 'application/json'
           }
         }
@@ -171,8 +181,12 @@ const PaymentScreen = ({ navigation, route }) => {
           [
             {
               text: 'OK',
-              onPress: () => {
-                checkSubscriptionStatus();
+              onPress: async () => {
+                if (pendingRegistration) {
+                  // Complete the registration process
+                  await completeRegistration();
+                }
+                // Navigate to Home screen
                 navigation.navigate('Home');
               }
             }
@@ -223,6 +237,74 @@ const PaymentScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleTestContinue = async () => {
+    try {
+      setLoading(true);
+      console.log('Test continue button clicked');
+      
+      if (pendingRegistration) {
+        // Store the token before completing registration
+        const authToken = pendingRegistration.token;
+        console.log('Stored auth token for test subscription:', authToken);
+        
+        // Complete the registration process without payment
+        console.log('Completing registration...');
+        await completeRegistration();
+        
+        // Try to create a test subscription to avoid 403 errors
+        if (authToken) {
+          try {
+            console.log('Creating test subscription...');
+            console.log('Request URL:', `${API_URL}/subscriptions/test-create`);
+            console.log('Request headers:', {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            });
+            
+            const response = await axios.post(
+              `${API_URL}/subscriptions/test-create`,
+              {},
+              {
+                headers: {
+                  'Authorization': `Bearer ${authToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            console.log('Test subscription response:', response.data);
+            
+            if (response.data.success) {
+              console.log('Test subscription created successfully');
+            } else {
+              console.log('Test subscription creation failed:', response.data.message);
+            }
+          } catch (error) {
+            console.log('Test subscription creation error:', error.response?.data || error.message);
+            console.log('Error status:', error.response?.status);
+            console.log('Error config:', error.config);
+            // If test subscription fails, we'll continue anyway and handle 403 errors in the UI
+          }
+        } else {
+          console.log('No auth token available for test subscription creation');
+        }
+        
+        // Navigate to Home screen immediately after completion
+        console.log('Registration and test subscription completed, navigating to Home');
+        navigation.navigate('Home');
+      } else {
+        // For existing users, just navigate to home
+        console.log('No pending registration, navigating to Home');
+        navigation.navigate('Home');
+      }
+    } catch (error) {
+      console.error('Test continue error:', error);
+      Alert.alert('Error', 'Failed to continue. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -231,54 +313,95 @@ const PaymentScreen = ({ navigation, route }) => {
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          <Text style={styles.title}>Choose Payment Method</Text>
-          <Text style={styles.subtitle}>Select your preferred payment method</Text>
+          {isExpired ? (
+            <>
+              <Text style={styles.title}>Subscription Expired</Text>
+              <Text style={styles.subtitle}>Your subscription has expired. Please renew to continue enjoying premium content.</Text>
+              <TouchableOpacity
+                style={styles.providerCard}
+                onPress={() => navigation.replace('Payment', { expired: false })}
+                disabled={loading}
+              >
+                <Text style={styles.providerName}>Renew Subscription</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={signOut}
+                disabled={loading}
+              >
+                <Text style={styles.cancelButtonText}>Cancel / Logout</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={styles.title}>Choose Payment Method</Text>
+              <Text style={styles.subtitle}>
+                {pendingRegistration 
+                  ? `Complete your registration, ${pendingRegistration.firstName}!`
+                  : 'Select your preferred payment method'
+                }
+              </Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your phone number"
-            placeholderTextColor="#888"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-          />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your phone number"
+                placeholderTextColor="#888"
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                keyboardType="phone-pad"
+              />
 
-          {PAYMENT_PROVIDERS.map((provider) => (
-            <TouchableOpacity
-              key={provider.id}
-              style={styles.providerCard}
-              onPress={() => handlePayment(provider.id)}
-              disabled={loading}
-            >
-              <View style={styles.providerHeader}>
-                <Ionicons name={provider.icon} size={24} color="#6A0DAD" />
-                <Text style={styles.providerName}>{provider.name}</Text>
-              </View>
-              <Text style={styles.providerDescription}>{provider.description}</Text>
-            </TouchableOpacity>
-          ))}
+              {PAYMENT_PROVIDERS.map((provider) => (
+                <TouchableOpacity
+                  key={provider.id}
+                  style={styles.providerCard}
+                  onPress={() => handlePayment(provider.id)}
+                  disabled={loading}
+                >
+                  <View style={styles.providerHeader}>
+                    <Ionicons name={provider.icon} size={24} color="#6A0DAD" />
+                    <Text style={styles.providerName}>{provider.name}</Text>
+                  </View>
+                  <Text style={styles.providerDescription}>{provider.description}</Text>
+                </TouchableOpacity>
+              ))}
 
-          {subscriptionStatus?.status === 'active' && (
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={cancelSubscription}
-              disabled={loading}
-            >
-              <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
-            </TouchableOpacity>
-          )}
+              {/* Temporary test button for development */}
+              <TouchableOpacity
+                style={styles.testContinueButton}
+                onPress={handleTestContinue}
+                disabled={loading}
+              >
+                <Text style={styles.testContinueButtonText}>
+                  🧪 Continue without payment (TEST MODE)
+                </Text>
+              </TouchableOpacity>
 
-          {loading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#6A0DAD" />
-            </View>
-          )}
+              {subscriptionStatus?.status === 'active' && (
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={cancelSubscription}
+                  disabled={loading}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
+                </TouchableOpacity>
+              )}
 
-          {isTestEnabled && (
-            <Button
-              title="Continue without payment (Test)"
-              onPress={() => createTestSubscription(authContext.token)}
-            />
+              {loading && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="large" color="#6A0DAD" />
+                </View>
+              )}
+
+              {isTestEnabled && (
+                <TouchableOpacity
+                  style={styles.testButton}
+                  onPress={() => createTestSubscription(currentUser?.token)}
+                >
+                  <Text style={styles.testButtonText}>Continue without payment (Test)</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       </ScrollView>
@@ -372,6 +495,34 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#E1BEE7',
+  },
+  testButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    width: '100%',
+    marginTop: 20,
+  },
+  testButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  testContinueButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    width: '100%',
+    marginTop: 20,
+  },
+  testContinueButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

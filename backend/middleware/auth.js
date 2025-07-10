@@ -16,7 +16,10 @@ const auth = (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         
         // Add user from payload
-        req.user = decoded;
+        req.user = {
+            ...decoded,
+            isSuperAdmin: !!decoded.isSuperAdmin // ensures boolean
+        };
         next();
     } catch (error) {
         res.status(401).json({ 

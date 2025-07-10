@@ -21,7 +21,7 @@
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-mana-dev-d4b84-deployment/amplify-cfn-templates/hosting/amplifyhosting-template.json",
         "logicalId": "hostingamplifyhosting"
       },
-      "lastPushTimeStamp": "2025-07-09T00:38:45.274Z",
+      "lastPushTimeStamp": "2025-07-10T19:33:58.085Z",
       "output": {},
       "lastPushDirHash": "BMQUGKYjmOjszuZh5FKDsJtY9to="
     }

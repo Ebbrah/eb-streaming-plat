@@ -15,8 +15,9 @@ import { Video } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import LoggedInHeader from '../components/LoggedInHeader';
-import { API_URL } from '../config';
+import { API_URL, DEBUG_MODE } from '../config';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 const THUMBNAIL_WIDTH = width * 0.4;
@@ -61,6 +62,12 @@ const HomeScreen = ({ navigation }) => {
       setLoading(true);
       setError(null);
       
+      if (DEBUG_MODE) {
+        console.log('=== DEBUG: Starting fetchMovies ===');
+        console.log('User authenticated:', !!user);
+        console.log('API URL:', API_URL);
+      }
+      
       if (user) {
         console.log('Mobile HomeScreen: Authenticated, fetching all movies...');
         // User is authenticated - fetch full movies
@@ -68,18 +75,38 @@ const HomeScreen = ({ navigation }) => {
         let currentPage = 1;
         let totalPages = 1;
 
+        // Get the auth token for authenticated requests
+        const token = await AsyncStorage.getItem('authToken');
+        
+        if (DEBUG_MODE) {
+          console.log('Auth token exists:', !!token);
+        }
+
         while (currentPage <= totalPages) {
+          if (DEBUG_MODE) {
+            console.log(`Making request to: ${API_URL}/movies (page ${currentPage})`);
+          }
+          
           const response = await axios.get(`${API_URL}/movies`, {
             params: {
               page: currentPage,
               limit: 10
             },
-            timeout: 15000, // 15 second timeout
+            timeout: 30000, // 30 second timeout
             headers: {
               'Accept': 'application/json',
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
             }
           });
+          
+          if (DEBUG_MODE) {
+            console.log('Response received:', {
+              status: response.status,
+              dataKeys: Object.keys(response.data || {}),
+              success: response.data?.success
+            });
+          }
           
           const data = response.data;
           
@@ -93,7 +120,14 @@ const HomeScreen = ({ navigation }) => {
             }
             
             allFetchedMovies = [...allFetchedMovies, ...(data.data || [])];
-            totalPages = data.pagination.pages;
+            
+            // Check if pagination exists before accessing it
+            if (data.pagination && data.pagination.pages) {
+              totalPages = data.pagination.pages;
+            } else {
+              // If no pagination info, assume this is the only page
+              totalPages = 1;
+            }
             currentPage++;
           } else {
             setError(data.message || 'Failed to fetch movies');
@@ -129,15 +163,28 @@ const HomeScreen = ({ navigation }) => {
         }, {});
         setMoviesByGenre(groupedMovies);
       } else {
-        console.log('Mobile HomeScreen: Unauthenticated, fetching public featured movies...');
         // User is not authenticated - fetch only public featured movies
+        console.log('Mobile HomeScreen: Unauthenticated, fetching public featured movies...');
+        
+        if (DEBUG_MODE) {
+          console.log(`Making request to: ${API_URL}/movies/public/featured`);
+        }
+        
         const response = await axios.get(`${API_URL}/movies/public/featured`, {
-          timeout: 15000,
+          timeout: 30000, // 30 second timeout
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           }
         });
+        
+        if (DEBUG_MODE) {
+          console.log('Public featured response received:', {
+            status: response.status,
+            dataKeys: Object.keys(response.data || {}),
+            success: response.data?.success
+          });
+        }
         
         const data = response.data;
         console.log('Mobile HomeScreen: Public featured movies response:', data);
@@ -147,20 +194,44 @@ const HomeScreen = ({ navigation }) => {
           if (featuredMovies.length > 0) {
             setFeaturedMovie(featuredMovies[0]);
           }
-          setMovies([]); // No full movies for unauthenticated users
-          setMoviesByGenre({}); // No genre grouping for unauthenticated users
         } else {
           setError(data.message || 'Failed to fetch featured movies');
         }
+        setMovies([]); // No full movies for unauthenticated users
+        setMoviesByGenre({}); // No genre grouping for unauthenticated users
       }
-
     } catch (err) {
       console.error('Error fetching movies:', {
         message: err.message,
         response: err.response?.data,
-        status: err.response?.status
+        status: err.response?.status,
+        code: err.code,
+        config: err.config
       });
-      setError(err.response?.data?.message || 'Error connecting to the server. Please try again.');
+      
+      if (DEBUG_MODE) {
+        console.log('=== DEBUG: Error Details ===');
+        console.log('Error message:', err.message);
+        console.log('Error code:', err.code);
+        console.log('Error response status:', err.response?.status);
+        console.log('Error response data:', err.response?.data);
+        console.log('Request config:', {
+          url: err.config?.url,
+          method: err.config?.method,
+          headers: err.config?.headers
+        });
+      }
+      
+      // Handle specific network errors
+      if (err.code === 'NETWORK_ERROR' || err.message.includes('Network Error')) {
+        setError('Network connection issue. Please check your internet connection and try again.');
+      } else if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+        setError('Request timed out. Please try again.');
+      } else if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else {
+        setError(err.response?.data?.message || 'Error connecting to the server. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

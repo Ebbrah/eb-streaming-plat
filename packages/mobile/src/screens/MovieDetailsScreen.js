@@ -14,6 +14,9 @@ import { Video } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import LoggedInHeader from '../components/LoggedInHeader';
+import { API_URL } from '../config';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 const VIDEO_HEIGHT = width * 0.5625; // 16:9 aspect ratio
@@ -32,8 +35,17 @@ const MovieDetailsScreen = ({ route, navigation }) => {
 
   const fetchMovieDetails = async () => {
     try {
-      const response = await fetch(`http://172.20.10.10:3000/api/movies/${movieId}`);
-      const data = await response.json();
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await axios.get(`${API_URL}/movies/${movieId}`, {
+        timeout: 30000, // 30 second timeout
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = response.data;
       
       if (data.success) {
         setMovie(data.data);

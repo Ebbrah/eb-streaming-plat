@@ -18,8 +18,8 @@ const LandingScreen = ({ navigation }) => {
   const fetchLandingFeaturedMovies = async () => {
     try {
       setError(null);
-      const response = await axios.get(`${API_URL}/movies`, {
-        timeout: 10000,
+      const response = await axios.get(`${API_URL}/movies/public/featured`, {
+        timeout: 30000, // 30 second timeout
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
@@ -28,8 +28,8 @@ const LandingScreen = ({ navigation }) => {
 
       console.log('LandingScreen - Featured movies API response:', response.data);
 
-      if (response.data.success && response.data.featuredMovies) {
-        setLandingFeaturedMovies(response.data.featuredMovies.slice(0, 6));
+      if (response.data.success && response.data.data) {
+        setLandingFeaturedMovies(response.data.data.slice(0, 6));
       } else {
         setError('No featured movies available');
       }

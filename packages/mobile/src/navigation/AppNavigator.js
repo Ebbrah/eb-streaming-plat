@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -28,7 +28,26 @@ const ErrorScreen = ({ error }) => (
 );
 
 const AppNavigator = () => {
-  const { user, isLoading, error } = useAuth();
+  const { user, isLoading, error, pendingRegistration, subscriptionStatus } = useAuth();
+  const navigationRef = useRef();
+
+  useEffect(() => {
+    if (user && subscriptionStatus && subscriptionStatus.status !== 'active') {
+      // Redirect to PaymentScreen with expired param if subscription is not active
+      navigationRef.current?.reset({
+        index: 0,
+        routes: [{ name: 'Payment', params: { expired: true } }],
+      });
+    }
+  }, [user, subscriptionStatus]);
+
+  console.log('AppNavigator state:', { 
+    user: !!user, 
+    isLoading, 
+    error: !!error, 
+    pendingRegistration: !!pendingRegistration,
+    pendingRegistrationData: pendingRegistration 
+  });
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -39,22 +58,27 @@ const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: '#000' },
         }}
       >
-        {!user ? (
-          // Auth stack
+        {!user && !pendingRegistration ? (
+          // Auth stack - no user logged in and no pending registration
           <>
             <Stack.Screen name="Landing" component={LandingScreen} />
             <Stack.Screen name="Auth" component={AuthScreen} />
+          </>
+        ) : pendingRegistration ? (
+          // Payment stack - user registered but hasn't completed payment
+          <>
             <Stack.Screen name="Payment" component={PaymentScreen} />
+            <Stack.Screen name="Auth" component={AuthScreen} />
           </>
         ) : (
-          // App stack
+          // App stack - user is fully authenticated
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Search" component={SearchScreen} />

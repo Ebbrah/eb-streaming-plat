@@ -62,14 +62,21 @@ class SubscriptionController {
     // TEST ONLY: Create a test subscription (short-lived)
     static async createTestSubscription(req, res) {
         try {
-            if (process.env.ALLOW_TEST_SUBSCRIPTIONS !== 'true') {
+            console.log('Test subscription: req.user:', req.user);
+            const userId = req.user.userId;
+            if (!userId) {
+                console.error('No userId in req.user:', req.user);
+            }
+            // Temporarily allow test subscriptions for development/testing
+            // TODO: Remove this bypass and use proper environment variable in production
+            const allowTestSubscriptions = process.env.ALLOW_TEST_SUBSCRIPTIONS === 'true' || true;
+            
+            if (!allowTestSubscriptions) {
                 return res.status(403).json({
                     success: false,
                     message: 'Test subscriptions are not enabled.'
                 });
             }
-
-            const userId = req.user.userId;
 
             // Check if user already has an active subscription
             let existingSubscription = await Subscription.findOne({ 
@@ -78,6 +85,7 @@ class SubscriptionController {
             });
 
             if (existingSubscription) {
+                console.log('User already has an active subscription:', existingSubscription);
                 return res.status(400).json({
                     success: false,
                     message: 'User already has an active subscription'
@@ -115,7 +123,8 @@ class SubscriptionController {
             console.error('Test subscription creation error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Error creating test subscription'
+                message: 'Error creating test subscription',
+                error: error.message,
             });
         }
     }

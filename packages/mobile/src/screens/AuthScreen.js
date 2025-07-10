@@ -4,12 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const AuthScreen = ({ navigation, route }) => {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, pendingRegistration } = useAuth();
   const [email, setEmail] = useState(route.params?.initialEmail || '');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [isLogin, setIsLogin] = useState(true); // true for login, false for register
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleAuth = async () => {
     if (isLogin) {
@@ -20,21 +22,51 @@ const AuthScreen = ({ navigation, route }) => {
         Alert.alert('Login Failed', result.error || 'An unknown error occurred.');
       }
     } else {
-      if (!firstName || !lastName || !email || !password) {
-        Alert.alert('Registration Failed', 'Please fill in all fields.');
-        return;
-      }
-      const result = await signUp(email, password, firstName, lastName);
-      if (result.success) {
-        // Navigate to payment screen instead of showing success alert
-        navigation.navigate('Payment', {
-          user: result.user
-        });
-      } else {
-        Alert.alert('Registration Failed', result.error || 'An unknown error occurred.');
-      }
+      await handleSignUp();
     }
   };
+
+  const handleSignUp = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await signUp(email, password, firstName, lastName);
+      
+      if (result.success) {
+        // User is registered but not logged in yet - AppNavigator will automatically show Payment screen
+        console.log('Registration successful, pendingRegistration should be set');
+        
+        // Clear form
+        setEmail('');
+        setPassword('');
+        setFirstName('');
+        setLastName('');
+      } else {
+        setError(result.error);
+      }
+    } catch (error) {
+      setError('An unexpected error occurred during registration.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validateForm = () => {
+    if (!firstName || !lastName || !email || !password) {
+      Alert.alert('Registration Failed', 'Please fill in all fields.');
+      return false;
+    }
+    return true;
+  };
+
+  useEffect(() => {
+    if (pendingRegistration) {
+      navigation.replace('Payment');
+    }
+  }, [pendingRegistration]);
 
   return (
     <SafeAreaView style={styles.container}>

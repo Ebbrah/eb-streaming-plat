@@ -160,22 +160,21 @@ function PaymentPage() {
                 if (data.success && data.data && data.data.token && data.data.user) {
                   const token = data.data.token;
                   localStorage.setItem('token', token);
-                  // 2. Call test subscription endpoint (corrected path)
-                  const testResp = await fetch('/api/subscriptions/test-create', {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${token}`,
-                      'Content-Type': 'application/json',
-                    },
-                  });
-                  const testData = await testResp.json();
-                  if (testData.success) {
-                    setPendingRegistrationForm(null);
-                    // Force reload to ensure AuthContext picks up new token
-                    window.location.href = '/';
-                  } else {
-                    setError(testData.message || 'Test subscription failed');
+                  setPendingRegistrationForm(null);
+                  // 2. Call test subscription endpoint, but do not block user if it fails
+                  try {
+                    await fetch('/api/subscriptions/test-create', {
+                      method: 'POST',
+                      headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                      },
+                    });
+                  } catch (err) {
+                    // Optionally show a toast, but do not block
                   }
+                  // Always redirect to home
+                  window.location.href = '/';
                 } else {
                   setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');
                 }

@@ -41,9 +41,7 @@ function RegisterForm({ onError }: { onError?: (e: Error) => void }) {
     setIsLoading(true);
 
     try {
-      const result = await register(formData.name, formData.email, formData.password);
-      console.log('Registration result:', result);
-      toast.success('Account created successfully! Please complete payment to activate your account.');
+      await register(formData.name, formData.email, formData.password);
       router.push('/payment');
     } catch (error: any) {
       console.error('Registration error:', error);

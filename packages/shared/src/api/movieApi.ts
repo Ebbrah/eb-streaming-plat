@@ -31,7 +31,8 @@ export const movieApi = {
       let url;
       let headers: Record<string, string> = {};
       if (isAuthenticated) {
-        url = `${API_URL}/api/movies?limit=${limit}`;
+        // Use the web app's API route instead of calling backend directly
+        url = `/api/movies?limit=${limit}`;
         // Attach Authorization header if token exists
         if (typeof window !== 'undefined') {
           const token = localStorage.getItem('token');
@@ -75,7 +76,7 @@ export const movieApi = {
 
   async getMovieById(id: string): Promise<Movie | null> {
     try {
-      const response = await fetchWithTimeout(`${API_URL}/api/movies/${id}`);
+      const response = await fetchWithTimeout(`/api/movies/${id}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

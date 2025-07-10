@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, setPendingRegistrationForm } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -29,23 +29,14 @@ function LoginForm() {
     e.preventDefault();
     try {
       if (isRegistering) {
-        // Register new user
-        const response = await fetch('/api/users/register/user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
+        // Deferred registration: store form data and redirect to payment
+        setPendingRegistrationForm({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
         });
-
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.message);
-        }
-
-        // Auto login after registration
-        await login(formData.email, formData.password);
-        toast.success('Registration successful!');
+        router.push('/payment');
+        return;
       } else {
         // Login existing user
         await login(formData.email, formData.password);

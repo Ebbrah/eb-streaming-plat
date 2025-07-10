@@ -5,14 +5,27 @@ import LandingPage from './components/LandingPage';
 import LoggedInHome from './components/LoggedInHome';
 import TrailerPlayer from './components/TrailerPlayer';
 import { Movie, movieApi } from '@mana/shared';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
-  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const { isAuthenticated, loading: authLoading, user, subscriptionStatus } = useAuth();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    // If user is authenticated but subscription is not active, redirect to payment
+    if (
+      isAuthenticated &&
+      subscriptionStatus &&
+      subscriptionStatus.status !== 'active'
+    ) {
+      router.push('/payment?expired=1');
+    }
+  }, [isAuthenticated, subscriptionStatus, router]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -60,6 +73,10 @@ export default function HomePage() {
   }
   if (!isAuthenticated) {
     return <LandingPage featuredMovies={featuredMovies} />;
+  }
+  // If subscription is not active, don't render premium content (redirect will happen in useEffect)
+  if (subscriptionStatus && subscriptionStatus.status !== 'active') {
+    return null;
   }
   if (!movies.length) {
     console.warn('[DIAG] HomePage: Movies array is empty or not set:', movies);

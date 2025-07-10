@@ -35,6 +35,13 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  subscriptionStatus: SubscriptionStatus | null;
+  refreshSubscriptionStatus: () => Promise<void>;
+}
+
+interface SubscriptionStatus {
+  status: string;
+  [key: string]: any;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +49,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -53,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem('token');
       if (!token) {
         setUser(null);
+        setSubscriptionStatus(null);
         setLoading(false);
         return;
       }
@@ -66,16 +75,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       if (data.success) {
         setUser(data.data);
+        await refreshSubscriptionStatus();
       } else {
         localStorage.removeItem('token');
         setUser(null);
+        setSubscriptionStatus(null);
       }
     } catch (error) {
       console.error('Auth check error:', error);
       localStorage.removeItem('token');
       setUser(null);
+      setSubscriptionStatus(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshSubscriptionStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setSubscriptionStatus(null);
+        return;
+      }
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSubscriptionStatus(data.data);
+      } else {
+        setSubscriptionStatus(null);
+      }
+    } catch (error) {
+      setSubscriptionStatus(null);
     }
   };
 
@@ -100,7 +135,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.success) {
         localStorage.setItem('token', data.data.token);
         setUser(data.data.user);
-        router.push('/');
+        await refreshSubscriptionStatus();
+        if (!data.data.user || !data.data.token) {
+          throw new Error('Invalid login response');
+        }
+        // Check subscription status and redirect
+        if (!data.data.user || !data.data.token) return;
+        const subResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/status`, {
+          headers: { 'Authorization': `Bearer ${data.data.token}` },
+        });
+        const subData = await subResp.json();
+        if (!subData.success || !subData.data || subData.data.status !== 'active') {
+          router.push('/payment?expired=1');
+        } else {
+          router.push('/');
+        }
       } else {
         throw new Error(data.message || 'Login failed');
       }
@@ -131,13 +180,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Auth: Registration successful, setting token and user');
         localStorage.setItem('token', data.data.token);
         setUser(data.data.user);
-        
-        // Small delay to ensure state is updated before redirect
-        setTimeout(() => {
-          console.log('Auth: Redirecting after registration');
+        await refreshSubscriptionStatus();
+        // Check subscription status and redirect
+        const subResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/status`, {
+          headers: { 'Authorization': `Bearer ${data.data.token}` },
+        });
+        const subData = await subResp.json();
+        if (!subData.success || !subData.data || subData.data.status !== 'active') {
+          router.push('/payment?expired=1');
+        } else {
           router.push('/');
-        }, 100);
-        
+        }
         return data;
       } else {
         console.error('Auth: Registration failed - invalid response structure:', data);
@@ -152,11 +205,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    setSubscriptionStatus(null);
     router.push('/');
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout, loading, subscriptionStatus, refreshSubscriptionStatus }}>
       {children}
     </AuthContext.Provider>
   );

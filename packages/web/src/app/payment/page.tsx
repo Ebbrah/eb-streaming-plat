@@ -161,20 +161,42 @@ function PaymentPage() {
                   const token = data.data.token;
                   localStorage.setItem('token', token);
                   setPendingRegistrationForm(null);
-                  // 2. Call test subscription endpoint, but do not block user if it fails
+                  
+                  // 2. Call test subscription endpoint with better error handling
+                  let testSubscriptionSuccess = false;
                   try {
-                    await fetch('/api/subscriptions/test-create', {
+                    console.log('Creating test subscription with token:', token.substring(0, 20) + '...');
+                    const testResponse = await fetch('/api/subscriptions/test-create', {
                       method: 'POST',
                       headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                       },
                     });
+                    
+                    const testData = await testResponse.json();
+                    console.log('Test subscription response:', testData);
+                    
+                    if (testData.success) {
+                      console.log('Test subscription created successfully');
+                      testSubscriptionSuccess = true;
+                    } else {
+                      console.warn('Test subscription failed:', testData.message);
+                      testSubscriptionSuccess = false;
+                    }
                   } catch (err) {
-                    // Optionally show a toast, but do not block
+                    console.error('Test subscription error:', err);
+                    testSubscriptionSuccess = false;
                   }
-                  // Always redirect to home
-                  window.location.href = '/';
+                  
+                  // 3. Redirect based on test subscription result
+                  if (testSubscriptionSuccess) {
+                    console.log('Registration and test subscription completed, redirecting to home...');
+                    window.location.href = '/';
+                  } else {
+                    console.log('Test subscription failed, redirecting to payment with expired status...');
+                    window.location.href = '/payment?expired=1';
+                  }
                 } else {
                   setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');
                 }

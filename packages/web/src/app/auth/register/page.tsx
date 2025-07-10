@@ -42,6 +42,18 @@ function RegisterForm({ onError }: { onError?: (e: Error) => void }) {
 
     try {
       await register(formData.name, formData.email, formData.password);
+      // Debug: log state after registration
+      setTimeout(() => {
+        // Delay to allow state updates
+        // @ts-ignore
+        const { user, pendingRegistration } = require('@/lib/auth').useAuth();
+        // eslint-disable-next-line no-console
+        console.log('After registration:', {
+          user,
+          pendingRegistration,
+          token: typeof window !== 'undefined' ? localStorage.getItem('token') : null
+        });
+      }, 100);
       router.push('/payment');
     } catch (error: any) {
       console.error('Registration error:', error);

@@ -33,7 +33,23 @@ function PaymentPage() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
   const expired = searchParams.get('expired') === '1';
+
+  const PAYMENT_PROVIDERS = [
+    {
+      id: 'mpesa',
+      name: 'M-PESA',
+      description: 'Pay using M-PESA mobile money',
+      icon: '📱',
+    },
+    {
+      id: 'mix',
+      name: 'Mix Payment',
+      description: 'Pay using credit/debit card',
+      icon: '💳',
+    },
+  ];
 
   useEffect(() => {
     if (!user && !pendingRegistration && !pendingRegistrationForm) {
@@ -75,31 +91,76 @@ function PaymentPage() {
       <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Payment
+            Choose Payment Method
           </h2>
           <p className="text-center text-gray-600 mb-4">
-            Please complete your payment to activate your subscription.
+            {pendingRegistrationForm.name
+              ? `Complete your registration, ${pendingRegistrationForm.name}!`
+              : 'Select your preferred payment method'}
           </p>
-          {/* TODO: Add real payment form here */}
+          <input
+            type="tel"
+            className="w-full px-4 py-2 border rounded mb-4"
+            placeholder="Enter your phone number"
+            value={phoneNumber}
+            onChange={e => setPhoneNumber(e.target.value)}
+            disabled={loading}
+          />
+          {PAYMENT_PROVIDERS.map((provider) => (
+            <button
+              key={provider.id}
+              className="w-full flex items-center justify-between py-3 px-4 mb-3 border border-gray-300 rounded hover:bg-purple-50"
+              disabled={loading || !phoneNumber}
+              onClick={async () => {
+                setError(null);
+                setLoading(true);
+                // Simulate payment logic (replace with real payment integration)
+                setTimeout(async () => {
+                  // After payment, send registration data to backend
+                  try {
+                    const response = await fetch('/api/users/register/user', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ ...pendingRegistrationForm, phoneNumber }),
+                    });
+                    const data = await response.json();
+                    if (data.success && data.data && data.data.token && data.data.user) {
+                      localStorage.setItem('token', data.data.token);
+                      setPendingRegistrationForm(null);
+                      router.push('/');
+                    } else {
+                      setError(data.message || 'Registration failed after payment');
+                    }
+                  } catch (err) {
+                    setError('Network error during registration');
+                  }
+                  setLoading(false);
+                }, 1200);
+              }}
+            >
+              <span className="text-2xl mr-3">{provider.icon}</span>
+              <span className="flex-1 text-left">
+                <span className="font-bold">{provider.name}</span>
+                <span className="block text-xs text-gray-500">{provider.description}</span>
+              </span>
+            </button>
+          ))}
           {isTestEnabled && (
             <button
               className="w-full py-2 px-4 mt-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               onClick={async () => {
                 setError(null);
                 setLoading(true);
-                // After payment, send registration data to backend
+                // After payment, send registration data to backend (test mode)
                 try {
                   const response = await fetch('/api/users/register/user', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(pendingRegistrationForm),
+                    body: JSON.stringify({ ...pendingRegistrationForm, phoneNumber }),
                   });
                   const data = await response.json();
                   if (data.success && data.data && data.data.token && data.data.user) {
-                    // Set user/token as in completeRegistration
                     localStorage.setItem('token', data.data.token);
-                    // Optionally fetch user profile for full info
-                    // ... set user in context if needed ...
                     setPendingRegistrationForm(null);
                     router.push('/');
                   } else {
@@ -112,8 +173,20 @@ function PaymentPage() {
               }}
               disabled={loading}
             >
-              {loading ? 'Processing...' : 'Continue without payment (Test)'}
+              {loading ? 'Processing...' : '🧪 Continue without payment (TEST MODE)'}
             </button>
+          )}
+          <button
+            className="w-full py-2 px-4 mt-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200"
+            onClick={logout}
+            disabled={loading}
+          >
+            Cancel / Logout
+          </button>
+          {loading && (
+            <div className="flex justify-center mt-4">
+              <span className="loader" /> Processing payment...
+            </div>
           )}
           {error && <div className="text-red-500 text-center mt-2">{error}</div>}
         </div>

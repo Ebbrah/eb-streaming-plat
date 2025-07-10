@@ -39,6 +39,8 @@ interface AuthContextType {
   subscriptionStatus: SubscriptionStatus | null;
   refreshSubscriptionStatus: () => Promise<void>;
   pendingRegistration: PendingRegistration | null;
+  pendingRegistrationForm: PendingRegistrationForm | null;
+  setPendingRegistrationForm: (form: PendingRegistrationForm | null) => void;
 }
 
 interface SubscriptionStatus {
@@ -55,6 +57,12 @@ interface PendingRegistration {
   token: string;
 }
 
+interface PendingRegistrationForm {
+  name: string;
+  email: string;
+  password: string;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -62,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [pendingRegistration, setPendingRegistration] = useState<PendingRegistration | null>(null);
+  const [pendingRegistrationForm, setPendingRegistrationForm] = useState<PendingRegistrationForm | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -245,7 +254,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, completeRegistration, logout, loading, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, completeRegistration, logout, loading, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, pendingRegistrationForm, setPendingRegistrationForm }}>
       {children}
     </AuthContext.Provider>
   );

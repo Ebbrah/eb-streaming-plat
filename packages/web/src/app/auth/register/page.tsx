@@ -21,7 +21,7 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
 function RegisterForm({ onError }: { onError?: (e: Error) => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { register } = useAuth();
+  const { register, pendingRegistration } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -43,8 +43,8 @@ function RegisterForm({ onError }: { onError?: (e: Error) => void }) {
     try {
       const result = await register(formData.name, formData.email, formData.password);
       console.log('Registration result:', result);
-      toast.success('Account created successfully!');
-      router.push('/');
+      toast.success('Account created successfully! Please complete payment to activate your account.');
+      router.push('/payment');
     } catch (error: any) {
       console.error('Registration error:', error);
       if (onError) onError(error);

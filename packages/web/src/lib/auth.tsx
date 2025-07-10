@@ -33,15 +33,26 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  completeRegistration: () => Promise<void>;
   logout: () => void;
   loading: boolean;
   subscriptionStatus: SubscriptionStatus | null;
   refreshSubscriptionStatus: () => Promise<void>;
+  pendingRegistration: PendingRegistration | null;
 }
 
 interface SubscriptionStatus {
   status: string;
   [key: string]: any;
+}
+
+interface PendingRegistration {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  isSuperAdmin: boolean;
+  token: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+  const [pendingRegistration, setPendingRegistration] = useState<PendingRegistration | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -177,20 +189,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Auth: Registration response:', { status: response.status, success: data.success });
       
       if (data.success && data.data && data.data.token && data.data.user) {
-        console.log('Auth: Registration successful, setting token and user');
-        localStorage.setItem('token', data.data.token);
-        setUser(data.data.user);
-        await refreshSubscriptionStatus();
-        // Check subscription status and redirect
-        const subResp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/status`, {
-          headers: { 'Authorization': `Bearer ${data.data.token}` },
-        });
-        const subData = await subResp.json();
-        if (!subData.success || !subData.data || subData.data.status !== 'active') {
-          router.push('/payment?expired=1');
-        } else {
-          router.push('/');
-        }
+        // Store registration data with token but don't log in yet
+        const pendingUser: PendingRegistration = {
+          id: data.data.user.id,
+          email: data.data.user.email,
+          name: data.data.user.name,
+          role: data.data.user.role,
+          isSuperAdmin: data.data.user.isSuperAdmin || false,
+          token: data.data.token
+        };
+        setPendingRegistration(pendingUser);
         return data;
       } else {
         console.error('Auth: Registration failed - invalid response structure:', data);
@@ -202,6 +210,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const completeRegistration = async () => {
+    if (pendingRegistration) {
+      // Set user and token, clear pendingRegistration
+      localStorage.setItem('token', pendingRegistration.token);
+      // Optionally fetch user profile for full info
+      setUser({
+        id: pendingRegistration.id,
+        email: pendingRegistration.email,
+        name: pendingRegistration.name,
+        role: pendingRegistration.role as any,
+        isSuperAdmin: pendingRegistration.isSuperAdmin,
+        profilePicture: '',
+        level: 0,
+        experience: 0,
+        achievements: [],
+        preferences: { theme: 'light', notifications: true, language: 'en' },
+      });
+      setPendingRegistration(null);
+      await refreshSubscriptionStatus();
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
@@ -210,7 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout, loading, subscriptionStatus, refreshSubscriptionStatus }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, completeRegistration, logout, loading, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration }}>
       {children}
     </AuthContext.Provider>
   );

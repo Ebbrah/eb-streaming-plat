@@ -28,7 +28,7 @@ function createTestSubscription(token: string, onSuccess: () => void, onError: (
 }
 
 function PaymentPage() {
-  const { user, logout, subscriptionStatus, refreshSubscriptionStatus } = useAuth();
+  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -36,20 +36,24 @@ function PaymentPage() {
   const expired = searchParams.get('expired') === '1';
 
   useEffect(() => {
-    if (!user) {
+    if (!user && !pendingRegistration) {
       router.push('/auth/login');
     }
-  }, [user, router]);
+  }, [user, pendingRegistration, router]);
 
   const handleRenew = async () => {
     setError(null);
     setLoading(true);
     // For demo, use test subscription
-    if (user && isTestEnabled) {
+    const token = pendingRegistration?.token || (user as any)?.token;
+    if (token && isTestEnabled) {
       createTestSubscription(
-        (user as any).token,
+        token,
         async () => {
           await refreshSubscriptionStatus();
+          if (pendingRegistration) {
+            await completeRegistration();
+          }
           router.push('/');
         },
         (msg) => setError(msg)

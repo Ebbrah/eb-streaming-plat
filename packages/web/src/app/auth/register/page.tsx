@@ -21,7 +21,7 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
 function RegisterForm({ onError }: { onError?: (e: Error) => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { register, pendingRegistration } = useAuth();
+  const { register, pendingRegistration, setPendingRegistrationForm, logout } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -40,20 +40,18 @@ function RegisterForm({ onError }: { onError?: (e: Error) => void }) {
     e.preventDefault();
     setIsLoading(true);
 
+    // Clear any old token/user before starting registration
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+    }
+    logout(); // This will also clear user state
+
     try {
-      await register(formData.name, formData.email, formData.password);
-      // Debug: log state after registration
-      setTimeout(() => {
-        // Delay to allow state updates
-        // @ts-ignore
-        const { user, pendingRegistration } = require('@/lib/auth').useAuth();
-        // eslint-disable-next-line no-console
-        console.log('After registration:', {
-          user,
-          pendingRegistration,
-          token: typeof window !== 'undefined' ? localStorage.getItem('token') : null
-        });
-      }, 100);
+      setPendingRegistrationForm({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
       router.push('/payment');
     } catch (error: any) {
       console.error('Registration error:', error);

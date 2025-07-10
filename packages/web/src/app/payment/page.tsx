@@ -28,7 +28,7 @@ function createTestSubscription(token: string, onSuccess: () => void, onError: (
 }
 
 function PaymentPage() {
-  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration } = useAuth();
+  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration, pendingRegistrationForm, setPendingRegistrationForm } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -36,10 +36,10 @@ function PaymentPage() {
   const expired = searchParams.get('expired') === '1';
 
   useEffect(() => {
-    if (!user && !pendingRegistration) {
+    if (!user && !pendingRegistration && !pendingRegistrationForm) {
       router.push('/auth/login');
     }
-  }, [user, pendingRegistration, router]);
+  }, [user, pendingRegistration, pendingRegistrationForm, router]);
 
   const handleRenew = async () => {
     setError(null);
@@ -70,7 +70,7 @@ function PaymentPage() {
   };
 
   // If in registration flow, always show payment form
-  if (pendingRegistration) {
+  if (pendingRegistrationForm) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
@@ -87,15 +87,27 @@ function PaymentPage() {
               onClick={async () => {
                 setError(null);
                 setLoading(true);
-                createTestSubscription(
-                  pendingRegistration.token,
-                  async () => {
-                    await refreshSubscriptionStatus();
-                    await completeRegistration();
+                // After payment, send registration data to backend
+                try {
+                  const response = await fetch('/api/users/register/user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pendingRegistrationForm),
+                  });
+                  const data = await response.json();
+                  if (data.success && data.data && data.data.token && data.data.user) {
+                    // Set user/token as in completeRegistration
+                    localStorage.setItem('token', data.data.token);
+                    // Optionally fetch user profile for full info
+                    // ... set user in context if needed ...
+                    setPendingRegistrationForm(null);
                     router.push('/');
-                  },
-                  (msg) => setError(msg)
-                );
+                  } else {
+                    setError(data.message || 'Registration failed after payment');
+                  }
+                } catch (err) {
+                  setError('Network error during registration');
+                }
                 setLoading(false);
               }}
               disabled={loading}

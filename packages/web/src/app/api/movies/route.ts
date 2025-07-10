@@ -6,20 +6,27 @@ export async function GET(request: Request) {
     const headersList = headers();
     const authHeader = headersList.get('authorization');
     
+    console.log('[DEBUG] movies/route: All headers received:', Object.fromEntries(headersList.entries()));
+    console.log('[DEBUG] movies/route: Authorization header:', authHeader);
+    
     if (!authHeader) {
+      console.warn('[DEBUG] movies/route: No Authorization header found');
       return NextResponse.json(
         { success: false, message: 'Authentication required' },
         { status: 401 }
       );
     }
 
+    console.log('[DEBUG] movies/route: Proxying to backend with auth header');
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies`, {
       headers: {
         'Authorization': authHeader,
       },
     });
 
+    console.log('[DEBUG] movies/route: Backend response status:', response.status);
     const data = await response.json();
+    console.log('[DEBUG] movies/route: Backend response data:', data);
 
     if (!response.ok) {
       return NextResponse.json(

@@ -30,6 +30,7 @@ export const movieApi = {
     try {
       let url;
       let headers: Record<string, string> = {};
+      
       if (isAuthenticated) {
         // Use the web app's API route instead of calling backend directly
         url = `/api/movies?limit=${limit}`;
@@ -38,16 +39,29 @@ export const movieApi = {
           const token = localStorage.getItem('token');
           if (token) {
             headers['Authorization'] = `Bearer ${token}`;
+            console.log('[DEBUG] movieApi: Token found, adding Authorization header');
+          } else {
+            console.warn('[DEBUG] movieApi: No token found in localStorage');
           }
         }
       } else {
         url = `${API_URL}/api/movies/public/featured`;
       }
+      
       console.log('Fetching movies from:', url);
+      console.log('[DEBUG] movieApi: Headers being sent:', headers);
+      
       const response = await fetchWithTimeout(url, { headers });
+      
+      console.log('[DEBUG] movieApi: Response status:', response.status);
+      console.log('[DEBUG] movieApi: Response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[DEBUG] movieApi: Error response body:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
       // Diagnostic logging
       if (Array.isArray(data)) {

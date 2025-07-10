@@ -3,7 +3,7 @@ import { useContext } from 'react';
 // import { AuthContext } from '...'; // Uncomment and fix path if you use context
 import { useAuth } from '@/lib/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 
 const isTestEnabled = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
 
@@ -27,7 +27,7 @@ function createTestSubscription(token: string, onSuccess: () => void, onError: (
     .catch(() => onError('Network error'));
 }
 
-export default function PaymentPage() {
+function PaymentPage() {
   const { user, logout, subscriptionStatus, refreshSubscriptionStatus } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -123,5 +123,13 @@ export default function PaymentPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PaymentPageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentPage />
+    </Suspense>
   );
 } 

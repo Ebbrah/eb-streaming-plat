@@ -8,7 +8,7 @@ import { useEffect, useState, Suspense } from 'react';
 const isTestEnabled = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
 
 function createTestSubscription(token: string, onSuccess: () => void, onError: (msg: string) => void) {
-  fetch('/api/subscription/test-create', {
+  fetch('/api/subscriptions/test-create', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -161,7 +161,7 @@ function PaymentPage() {
                   const token = data.data.token;
                   localStorage.setItem('token', token);
                   setPendingRegistrationForm(null);
-                  
+                  await completeRegistration();
                   // 2. Call test subscription endpoint with better error handling
                   let testSubscriptionSuccess = false;
                   try {

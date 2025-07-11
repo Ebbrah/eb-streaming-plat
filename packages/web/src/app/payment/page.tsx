@@ -28,7 +28,7 @@ function createTestSubscription(token: string, onSuccess: () => void, onError: (
 }
 
 function PaymentPage() {
-  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration, pendingRegistrationForm, setPendingRegistrationForm } = useAuth();
+  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -162,6 +162,7 @@ function PaymentPage() {
                   localStorage.setItem('token', token);
                   setPendingRegistrationForm(null);
                   await completeRegistration();
+                  await checkAuth(); // Ensure AuthContext is updated
                   // 2. Call test subscription endpoint with better error handling
                   let testSubscriptionSuccess = false;
                   try {

@@ -41,6 +41,7 @@ interface AuthContextType {
   pendingRegistration: PendingRegistration | null;
   pendingRegistrationForm: PendingRegistrationForm | null;
   setPendingRegistrationForm: (form: PendingRegistrationForm | null) => void;
+  checkAuth: () => Promise<void>; // <-- Add this line
 }
 
 interface SubscriptionStatus {
@@ -254,7 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, completeRegistration, logout, loading, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, pendingRegistrationForm, setPendingRegistrationForm }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, completeRegistration, logout, loading, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

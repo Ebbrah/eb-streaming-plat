@@ -192,10 +192,10 @@ function PaymentPage() {
                   // 3. Redirect based on test subscription result
                   if (testSubscriptionSuccess) {
                     console.log('Registration and test subscription completed, redirecting to home...');
-                    window.location.href = '/';
+                    router.push('/');
                   } else {
                     console.log('Test subscription failed, redirecting to payment with expired status...');
-                    window.location.href = '/payment?expired=1';
+                    router.push('/payment?expired=1');
                   }
                 } else {
                   setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');

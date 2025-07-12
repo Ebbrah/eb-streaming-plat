@@ -3,6 +3,7 @@ import { auth } from '../middleware/auth';
 import { PaymentService } from '../services/paymentService';
 import { Payment } from '../models/Payment';
 import { Subscription } from '../models/Subscription';
+import mongoose from 'mongoose';
 
 interface AuthRequest extends Request {
   user: {
@@ -11,6 +12,46 @@ interface AuthRequest extends Request {
 }
 
 const router = express.Router();
+
+// Test subscription creation endpoint
+router.post('/subscriptions/test-create', auth, async (req: AuthRequest, res: Response) => {
+  try {
+    // Check if test subscriptions are enabled
+    if (process.env.ALLOW_TEST_SUBSCRIPTIONS !== 'true') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Test subscriptions are not enabled' 
+      });
+    }
+
+    // Create a test subscription
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 1); // 1 month from now
+
+    const subscription = await Subscription.findOneAndUpdate(
+      { userId: req.user.id },
+      {
+        status: 'active',
+        plan: 'monthly',
+        startDate: new Date(),
+        endDate,
+        paymentId: new mongoose.Types.ObjectId() // Create a dummy payment ID
+      },
+      { upsert: true, new: true }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        subscription,
+        message: 'Test subscription created successfully'
+      }
+    });
+  } catch (error: any) {
+    console.error('Test subscription creation error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // Initiate M-Pesa payment
 router.post('/mpesa', auth, async (req: AuthRequest, res: Response) => {

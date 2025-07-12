@@ -8,7 +8,7 @@ import { Movie, movieApi } from '@mana/shared';
 import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
-  const { isAuthenticated, loading: authLoading, user, subscriptionStatus } = useAuth();
+  const { isAuthenticated, loading: authLoading, user, subscriptionStatus, ensureTestSubscription } = useAuth();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,18 +17,30 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If user is authenticated but subscription is not active, redirect to payment
-    // UNLESS we're in test mode
+    // If user is authenticated but subscription is not active, try to ensure test subscription first
     const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
     if (
       isAuthenticated &&
       subscriptionStatus &&
-      subscriptionStatus.status !== 'active' &&
-      !isTestMode
+      subscriptionStatus.status !== 'active'
     ) {
-      router.push('/payment?expired=1');
+      if (isTestMode) {
+        // In test mode, try to ensure test subscription exists before redirecting
+        ensureTestSubscription().then(() => {
+          // After ensuring subscription, check again
+          if (subscriptionStatus && subscriptionStatus.status !== 'active') {
+            router.push('/payment?expired=1');
+          }
+        }).catch(() => {
+          // If ensuring subscription fails, redirect to payment
+          router.push('/payment?expired=1');
+        });
+      } else {
+        // Not in test mode, redirect immediately
+        router.push('/payment?expired=1');
+      }
     }
-  }, [isAuthenticated, subscriptionStatus, router]);
+  }, [isAuthenticated, subscriptionStatus, router, ensureTestSubscription]);
 
   useEffect(() => {
     if (!authLoading) {

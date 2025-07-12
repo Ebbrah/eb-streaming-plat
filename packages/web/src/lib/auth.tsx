@@ -44,6 +44,7 @@ interface AuthContextType {
   checkAuth: () => Promise<void>;
   // Test subscription management functions
   createTestSubscription: (plan?: string, durationMinutes?: number) => Promise<any>;
+  ensureTestSubscription: () => Promise<void>;
   expireTestSubscription: () => any;
   renewTestSubscription: (plan?: string, durationMinutes?: number) => Promise<any>;
   cancelTestSubscription: () => any;
@@ -124,55 +125,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshSubscriptionStatus = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setSubscriptionStatus(null);
-        return;
-      }
-
-      // Check if we should use backend test mode
-      const isBackendTest = process.env.NEXT_PUBLIC_TEST_MODE === 'backend' || 
-                           process.env.NEXT_PUBLIC_TEST_MODE === 'hybrid';
-      
-      // Frontend-only test mode: bypass backend subscription check
-      const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
-      if (isTestMode && !isBackendTest) {
-        // Get test subscription data from localStorage
-        const testSubscriptionData = localStorage.getItem('testSubscription');
-        if (testSubscriptionData) {
-          const subscription = JSON.parse(testSubscriptionData);
-          console.log('[TEST MODE] Using stored test subscription:', subscription);
-          setSubscriptionStatus(subscription);
-        } else {
-          console.log('[TEST MODE] No test subscription found, setting to inactive');
-          setSubscriptionStatus({
-            status: 'inactive',
-            hasSubscription: false,
-            isActive: false
-          });
-        }
-        return;
-      }
-
-      // Backend test mode or production: call backend API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/status`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      if (data.success) {
-        setSubscriptionStatus(data.data);
-      } else {
-        setSubscriptionStatus(null);
-      }
-    } catch (error) {
-      setSubscriptionStatus(null);
-    }
-  };
-
   // Test subscription management functions
   const createTestSubscription = async (plan = 'monthly', durationMinutes = 5) => {
     const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
@@ -250,6 +202,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('[FRONTEND TEST MODE] Test subscription created:', testSubscription);
       return testSubscription;
+    }
+  };
+
+  // NEW: Pre-create test subscription before auth checks
+  const ensureTestSubscription = async () => {
+    const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
+    if (!isTestMode) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const isBackendTest = process.env.NEXT_PUBLIC_TEST_MODE === 'backend' || 
+                         process.env.NEXT_PUBLIC_TEST_MODE === 'hybrid';
+
+    if (isBackendTest) {
+      try {
+        // Check if subscription already exists
+        const statusResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/status`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        const statusData = await statusResponse.json();
+        
+        // If no active subscription, create one
+        if (!statusData.success || !statusData.data || statusData.data.status !== 'active') {
+          console.log('[PRE-CREATE] No active subscription found, creating test subscription...');
+          await createTestSubscription('monthly', 5);
+        }
+      } catch (error) {
+        console.error('[PRE-CREATE] Error ensuring test subscription:', error);
+      }
+    }
+  };
+
+  const refreshSubscriptionStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setSubscriptionStatus(null);
+        return;
+      }
+
+      // Check if we should use backend test mode
+      const isBackendTest = process.env.NEXT_PUBLIC_TEST_MODE === 'backend' || 
+                           process.env.NEXT_PUBLIC_TEST_MODE === 'hybrid';
+      
+      // Frontend-only test mode: bypass backend subscription check
+      const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
+      if (isTestMode && !isBackendTest) {
+        // Get test subscription data from localStorage
+        const testSubscriptionData = localStorage.getItem('testSubscription');
+        if (testSubscriptionData) {
+          const subscription = JSON.parse(testSubscriptionData);
+          console.log('[TEST MODE] Using stored test subscription:', subscription);
+          setSubscriptionStatus(subscription);
+        } else {
+          console.log('[TEST MODE] No test subscription found, setting to inactive');
+          setSubscriptionStatus({
+            status: 'inactive',
+            hasSubscription: false,
+            isActive: false
+          });
+        }
+        return;
+      }
+
+      // Backend test mode or production: call backend API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSubscriptionStatus(data.data);
+      } else {
+        setSubscriptionStatus(null);
+      }
+    } catch (error) {
+      setSubscriptionStatus(null);
     }
   };
 
@@ -428,7 +461,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, completeRegistration, logout, loading, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth, createTestSubscription, expireTestSubscription, renewTestSubscription, cancelTestSubscription, clearTestSubscription }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, completeRegistration, logout, loading, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth, createTestSubscription, ensureTestSubscription, expireTestSubscription, renewTestSubscription, cancelTestSubscription, clearTestSubscription }}>
       {children}
     </AuthContext.Provider>
   );

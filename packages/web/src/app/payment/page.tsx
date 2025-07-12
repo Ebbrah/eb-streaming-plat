@@ -28,7 +28,7 @@ function createTestSubscription(token: string, onSuccess: () => void, onError: (
 }
 
 function PaymentPage() {
-  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth, createTestSubscription } = useAuth();
+  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth, createTestSubscription, ensureTestSubscription } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -63,8 +63,8 @@ function PaymentPage() {
     
     try {
       if (isTestEnabled) {
-        // Use the new test subscription system
-        await createTestSubscription('monthly', 5); // 5 minutes duration
+        // Use the new pre-creation approach to avoid race conditions
+        await ensureTestSubscription();
         await refreshSubscriptionStatus();
         if (pendingRegistration) {
           await completeRegistration();
@@ -164,12 +164,13 @@ function PaymentPage() {
                   await completeRegistration();
                   await checkAuth(); // Ensure AuthContext is updated
                   
-                  // 2. Frontend-only approach: Skip backend test subscription
+                  // 2. Use the new pre-creation approach to avoid race conditions
                   if (isTestEnabled) {
-                    console.log('Test mode enabled - creating test subscription...');
+                    console.log('Test mode enabled - ensuring test subscription exists...');
                     try {
-                      await createTestSubscription('monthly', 5); // 5 minutes duration
-                      console.log('Test subscription created successfully, redirecting to home...');
+                      // Pre-create subscription before redirect
+                      await ensureTestSubscription();
+                      console.log('Test subscription ensured, redirecting to home...');
                       router.push('/');
                     } catch (error) {
                       console.error('Test subscription creation failed:', error);

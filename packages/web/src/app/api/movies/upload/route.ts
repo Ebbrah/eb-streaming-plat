@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     uploadFormData.append('video', video);
     uploadFormData.append('thumbnail', thumbnail);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/movies`, {
       method: 'POST',
       headers: {
         'Authorization': authHeader,

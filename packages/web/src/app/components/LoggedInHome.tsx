@@ -191,7 +191,7 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
           <button
             onClick={() => {
               localStorage.removeItem('token');
-              window.location.href = '/auth/login';
+              router.push('/auth/login');
             }}
             className="ml-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-semibold transition-colors"
           >

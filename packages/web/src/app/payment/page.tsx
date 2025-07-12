@@ -28,7 +28,7 @@ function createTestSubscription(token: string, onSuccess: () => void, onError: (
 }
 
 function PaymentPage() {
-  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth } = useAuth();
+  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth, createTestSubscription } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -60,25 +60,25 @@ function PaymentPage() {
   const handleRenew = async () => {
     setError(null);
     setLoading(true);
-    // For demo, use test subscription
-    const token = pendingRegistration?.token || (user as any)?.token;
-    if (token && isTestEnabled) {
-      createTestSubscription(
-        token,
-        async () => {
-          await refreshSubscriptionStatus();
-          if (pendingRegistration) {
-            await completeRegistration();
-          }
-          router.push('/');
-        },
-        (msg) => setError(msg)
-      );
-    } else {
-      // TODO: Integrate real payment logic here
-      setError('Real payment not implemented');
+    
+    try {
+      if (isTestEnabled) {
+        // Use the new test subscription system
+        await createTestSubscription('monthly', 5); // 5 minutes duration
+        await refreshSubscriptionStatus();
+        if (pendingRegistration) {
+          await completeRegistration();
+        }
+        router.push('/');
+      } else {
+        // TODO: Integrate real payment logic here
+        setError('Real payment not implemented');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to create subscription');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleCancel = () => {
@@ -163,40 +163,54 @@ function PaymentPage() {
                   setPendingRegistrationForm(null);
                   await completeRegistration();
                   await checkAuth(); // Ensure AuthContext is updated
-                  // 2. Call test subscription endpoint with better error handling
-                  let testSubscriptionSuccess = false;
-                  try {
-                    console.log('Creating test subscription with token:', token.substring(0, 20) + '...');
-                    const testResponse = await fetch('/api/subscriptions/test-create', {
-                      method: 'POST',
-                      headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                      },
-                    });
-                    
-                    const testData = await testResponse.json();
-                    console.log('Test subscription response:', testData);
-                    
-                    if (testData.success) {
-                      console.log('Test subscription created successfully');
-                      testSubscriptionSuccess = true;
-                    } else {
-                      console.warn('Test subscription failed:', testData.message);
+                  
+                  // 2. Frontend-only approach: Skip backend test subscription
+                  if (isTestEnabled) {
+                    console.log('Test mode enabled - creating test subscription...');
+                    try {
+                      await createTestSubscription('monthly', 5); // 5 minutes duration
+                      console.log('Test subscription created successfully, redirecting to home...');
+                      router.push('/');
+                    } catch (error) {
+                      console.error('Test subscription creation failed:', error);
+                      setError('Failed to create test subscription');
+                    }
+                  } else {
+                    // 3. Call test subscription endpoint with better error handling
+                    let testSubscriptionSuccess = false;
+                    try {
+                      console.log('Creating test subscription with token:', token.substring(0, 20) + '...');
+                      const testResponse = await fetch('/api/subscriptions/test-create', {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json',
+                        },
+                      });
+                      
+                      const testData = await testResponse.json();
+                      console.log('Test subscription response:', testData);
+                      
+                      if (testData.success) {
+                        console.log('Test subscription created successfully');
+                        testSubscriptionSuccess = true;
+                      } else {
+                        console.warn('Test subscription failed:', testData.message);
+                        testSubscriptionSuccess = false;
+                      }
+                    } catch (err) {
+                      console.error('Test subscription error:', err);
                       testSubscriptionSuccess = false;
                     }
-                  } catch (err) {
-                    console.error('Test subscription error:', err);
-                    testSubscriptionSuccess = false;
-                  }
-                  
-                  // 3. Redirect based on test subscription result
-                  if (testSubscriptionSuccess) {
-                    console.log('Registration and test subscription completed, redirecting to home...');
-                    router.push('/');
-                  } else {
-                    console.log('Test subscription failed, redirecting to payment with expired status...');
-                    router.push('/payment?expired=1');
+                    
+                    // 4. Redirect based on test subscription result
+                    if (testSubscriptionSuccess) {
+                      console.log('Registration and test subscription completed, redirecting to home...');
+                      router.push('/');
+                    } else {
+                      console.log('Test subscription failed, redirecting to payment with expired status...');
+                      router.push('/payment?expired=1');
+                    }
                   }
                 } else {
                   setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');

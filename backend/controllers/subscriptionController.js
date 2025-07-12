@@ -139,6 +139,18 @@ class SubscriptionController {
                 status: { $in: ['active', 'pending'] }
             }).sort({ createdAt: -1 });
 
+            // Debug log: print the subscription found and its dates
+            console.log('[getSubscriptionStatus] Found subscription:', subscription ? {
+                id: subscription._id,
+                status: subscription.status,
+                startDate: subscription.startDate,
+                endDate: subscription.endDate,
+                paymentMethod: subscription.paymentMethod,
+                paymentStatus: subscription.paymentStatus,
+                createdAt: subscription.createdAt,
+                updatedAt: subscription.updatedAt
+            } : null);
+
             if (!subscription) {
                 return res.json({
                     success: true,

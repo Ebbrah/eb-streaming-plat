@@ -18,10 +18,13 @@ export default function HomePage() {
 
   useEffect(() => {
     // If user is authenticated but subscription is not active, redirect to payment
+    // UNLESS we're in test mode
+    const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
     if (
       isAuthenticated &&
       subscriptionStatus &&
-      subscriptionStatus.status !== 'active'
+      subscriptionStatus.status !== 'active' &&
+      !isTestMode
     ) {
       router.push('/payment?expired=1');
     }

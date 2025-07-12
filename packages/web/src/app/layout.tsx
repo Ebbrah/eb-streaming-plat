@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import ConditionalNavbar from '@/components/layout/ConditionalNavbar'
 import ClientProviders from '@/components/providers/ClientProviders'
+import TestSubscriptionDashboard from './components/TestSubscriptionDashboard'
 import { PropsWithChildren } from 'react'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -21,6 +22,7 @@ export default function RootLayout({
         <ClientProviders>
           <ConditionalNavbar />
           {children}
+          <TestSubscriptionDashboard />
         </ClientProviders>
       </body>
     </html>

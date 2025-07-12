@@ -41,7 +41,13 @@ interface AuthContextType {
   pendingRegistration: PendingRegistration | null;
   pendingRegistrationForm: PendingRegistrationForm | null;
   setPendingRegistrationForm: (form: PendingRegistrationForm | null) => void;
-  checkAuth: () => Promise<void>; // <-- Add this line
+  checkAuth: () => Promise<void>;
+  // Test subscription management functions
+  createTestSubscription: (plan?: string, durationMinutes?: number) => Promise<any>;
+  expireTestSubscription: () => any;
+  renewTestSubscription: (plan?: string, durationMinutes?: number) => Promise<any>;
+  cancelTestSubscription: () => any;
+  clearTestSubscription: () => void;
 }
 
 interface SubscriptionStatus {
@@ -125,6 +131,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSubscriptionStatus(null);
         return;
       }
+
+      // Frontend-only test mode: bypass backend subscription check
+      const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
+      if (isTestMode) {
+        // Get test subscription data from localStorage
+        const testSubscriptionData = localStorage.getItem('testSubscription');
+        if (testSubscriptionData) {
+          const subscription = JSON.parse(testSubscriptionData);
+          console.log('[TEST MODE] Using stored test subscription:', subscription);
+          setSubscriptionStatus(subscription);
+        } else {
+          console.log('[TEST MODE] No test subscription found, setting to inactive');
+          setSubscriptionStatus({
+            status: 'inactive',
+            hasSubscription: false,
+            isActive: false
+          });
+        }
+        return;
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/status`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -139,6 +166,97 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       setSubscriptionStatus(null);
     }
+  };
+
+  // Test subscription management functions
+  const createTestSubscription = async (plan = 'monthly', durationMinutes = 5) => {
+    const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
+    if (!isTestMode) {
+      throw new Error('Test mode not enabled');
+    }
+
+    const startDate = new Date();
+    const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+    
+    const testSubscription = {
+      id: `test_${Date.now()}`,
+      status: 'active',
+      plan: plan,
+      paymentMethod: 'test',
+      paymentStatus: 'completed',
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      hasSubscription: true,
+      isActive: true,
+      autoRenew: true
+    };
+
+    localStorage.setItem('testSubscription', JSON.stringify(testSubscription));
+    setSubscriptionStatus(testSubscription);
+    
+    console.log('[TEST MODE] Test subscription created:', testSubscription);
+    return testSubscription;
+  };
+
+  const expireTestSubscription = () => {
+    const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
+    if (!isTestMode) {
+      throw new Error('Test mode not enabled');
+    }
+
+    const testSubscriptionData = localStorage.getItem('testSubscription');
+    if (testSubscriptionData) {
+      const subscription = JSON.parse(testSubscriptionData);
+      subscription.status = 'expired';
+      subscription.isActive = false;
+      subscription.endDate = new Date(Date.now() - 1000).toISOString(); // Set to past
+      
+      localStorage.setItem('testSubscription', JSON.stringify(subscription));
+      setSubscriptionStatus(subscription);
+      
+      console.log('[TEST MODE] Test subscription expired:', subscription);
+      return subscription;
+    }
+  };
+
+  const renewTestSubscription = async (plan = 'monthly', durationMinutes = 5) => {
+    const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
+    if (!isTestMode) {
+      throw new Error('Test mode not enabled');
+    }
+
+    return await createTestSubscription(plan, durationMinutes);
+  };
+
+  const cancelTestSubscription = () => {
+    const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
+    if (!isTestMode) {
+      throw new Error('Test mode not enabled');
+    }
+
+    const testSubscriptionData = localStorage.getItem('testSubscription');
+    if (testSubscriptionData) {
+      const subscription = JSON.parse(testSubscriptionData);
+      subscription.status = 'cancelled';
+      subscription.isActive = false;
+      subscription.autoRenew = false;
+      
+      localStorage.setItem('testSubscription', JSON.stringify(subscription));
+      setSubscriptionStatus(subscription);
+      
+      console.log('[TEST MODE] Test subscription cancelled:', subscription);
+      return subscription;
+    }
+  };
+
+  const clearTestSubscription = () => {
+    localStorage.removeItem('testSubscription');
+    setSubscriptionStatus({
+      status: 'inactive',
+      hasSubscription: false,
+      isActive: false
+    });
+    console.log('[TEST MODE] Test subscription cleared');
   };
 
   const login = async (email: string, password: string) => {
@@ -255,7 +373,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, completeRegistration, logout, loading, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, completeRegistration, logout, loading, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth, createTestSubscription, expireTestSubscription, renewTestSubscription, cancelTestSubscription, clearTestSubscription }}>
       {children}
     </AuthContext.Provider>
   );

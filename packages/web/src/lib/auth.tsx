@@ -132,9 +132,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Check if we should use backend test mode
+      const isBackendTest = process.env.NEXT_PUBLIC_TEST_MODE === 'backend' || 
+                           process.env.NEXT_PUBLIC_TEST_MODE === 'hybrid';
+      
       // Frontend-only test mode: bypass backend subscription check
       const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
-      if (isTestMode) {
+      if (isTestMode && !isBackendTest) {
         // Get test subscription data from localStorage
         const testSubscriptionData = localStorage.getItem('testSubscription');
         if (testSubscriptionData) {
@@ -152,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Backend test mode or production: call backend API
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/status`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -172,30 +177,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const createTestSubscription = async (plan = 'monthly', durationMinutes = 5) => {
     const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
     if (!isTestMode) {
-      throw new Error('Test mode not enabled');
+      throw new Error('Test mode is not enabled');
     }
 
-    const startDate = new Date();
-    const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
-    
-    const testSubscription = {
-      id: `test_${Date.now()}`,
-      status: 'active',
-      plan: plan,
-      paymentMethod: 'test',
-      paymentStatus: 'completed',
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      hasSubscription: true,
-      isActive: true,
-      autoRenew: true
-    };
+    const currentUser = user || pendingRegistration;
+    const userId = currentUser?.id;
 
-    localStorage.setItem('testSubscription', JSON.stringify(testSubscription));
-    setSubscriptionStatus(testSubscription);
-    
-    console.log('[TEST MODE] Test subscription created:', testSubscription);
-    return testSubscription;
+    // Check if we should use backend test mode
+    const isBackendTest = process.env.NEXT_PUBLIC_TEST_MODE === 'backend' || 
+                         process.env.NEXT_PUBLIC_TEST_MODE === 'hybrid';
+
+    if (isBackendTest) {
+      // Use backend API for test subscription
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/subscriptions/test-create`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            plan,
+            durationMinutes,
+            testMode: true
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          console.log('[BACKEND TEST MODE] Test subscription created:', data.data);
+          await refreshSubscriptionStatus(); // Refresh from backend
+          return data.data;
+        } else {
+          throw new Error(data.message || 'Failed to create test subscription');
+        }
+      } catch (error) {
+        console.error('[BACKEND TEST MODE] Error creating test subscription:', error);
+        throw error;
+      }
+    } else {
+      // Frontend-only test mode
+      const startDate = new Date();
+      const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+      
+      const testSubscription = {
+        id: `test_${userId || Date.now()}`,
+        userId: userId,
+        status: 'active',
+        plan: plan,
+        paymentMethod: 'test',
+        paymentStatus: 'completed',
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        hasSubscription: true,
+        isActive: true,
+        autoRenew: true
+      };
+
+      // Store user-specific test data
+      if (userId) {
+        localStorage.setItem(`testSubscription_${userId}`, JSON.stringify(testSubscription));
+      } else {
+        localStorage.setItem('testSubscription', JSON.stringify(testSubscription));
+      }
+      
+      setSubscriptionStatus(testSubscription);
+      
+      console.log('[FRONTEND TEST MODE] Test subscription created:', testSubscription);
+      return testSubscription;
+    }
   };
 
   const expireTestSubscription = () => {

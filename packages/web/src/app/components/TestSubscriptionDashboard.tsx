@@ -15,6 +15,7 @@ export default function TestSubscriptionDashboard() {
   
   const [duration, setDuration] = useState(5);
   const [plan, setPlan] = useState('monthly');
+  const [testMode, setTestMode] = useState(process.env.NEXT_PUBLIC_TEST_MODE || 'hybrid');
 
   const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
 
@@ -58,14 +59,45 @@ export default function TestSubscriptionDashboard() {
     clearTestSubscription();
   };
 
+  const getTestModeColor = (mode: string) => {
+    switch (mode) {
+      case 'frontend-only': return 'bg-blue-100 text-blue-800';
+      case 'backend': return 'bg-green-100 text-green-800';
+      case 'hybrid': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTestModeDescription = (mode: string) => {
+    switch (mode) {
+      case 'frontend-only': return 'Frontend Only (localStorage)';
+      case 'backend': return 'Backend Only (database)';
+      case 'hybrid': return 'Hybrid (backend + localStorage)';
+      default: return 'Unknown Mode';
+    }
+  };
+
   return (
     <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg shadow-lg p-4 max-w-sm z-50">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-800">🧪 Test Subscription Dashboard</h3>
-        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">TEST MODE</span>
+        <span className={`text-xs px-2 py-1 rounded ${getTestModeColor(testMode)}`}>
+          {testMode.toUpperCase()}
+        </span>
       </div>
       
       <div className="space-y-3">
+        {/* Test Mode Info */}
+        <div className="text-xs">
+          <div className="font-medium text-gray-700">Test Mode:</div>
+          <div className="text-gray-600">{getTestModeDescription(testMode)}</div>
+          {testMode === 'hybrid' && (
+            <div className="text-gray-500 mt-1">
+              Uses backend for persistence, localStorage for UI
+            </div>
+          )}
+        </div>
+
         {/* Current Status */}
         <div className="text-xs">
           <div className="font-medium text-gray-700">Current Status:</div>
@@ -151,6 +183,11 @@ export default function TestSubscriptionDashboard() {
             <li>Test renewal flow</li>
             <li>Test cancellation</li>
           </ol>
+          {testMode === 'hybrid' && (
+            <div className="mt-2 p-2 bg-blue-50 rounded text-blue-700">
+              <strong>Multi-User Ready:</strong> Each user gets their own test subscription in the database.
+            </div>
+          )}
         </div>
       </div>
     </div>

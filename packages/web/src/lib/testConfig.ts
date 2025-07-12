@@ -5,6 +5,9 @@ export const TEST_CONFIG = {
   // Enable/disable test mode
   ENABLED: process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true',
   
+  // Test mode type: 'frontend-only' | 'backend' | 'hybrid'
+  MODE: process.env.NEXT_PUBLIC_TEST_MODE || 'hybrid',
+  
   // Test subscription settings
   SUBSCRIPTION: {
     DEFAULT_DURATION_MINUTES: 5,
@@ -33,6 +36,7 @@ export const TEST_CONFIG = {
     ALLOW_MANUAL_RENEWAL: true,
     ALLOW_MANUAL_CANCELLATION: true,
     SIMULATE_PAYMENT_FAILURES: true,
+    USE_BACKEND_FOR_TEST: true, // Enable backend testing
   },
   
   // UI settings
@@ -46,6 +50,13 @@ export const TEST_CONFIG = {
 // Helper functions for test mode
 export const isTestMode = () => TEST_CONFIG.ENABLED;
 
+export const isBackendTestMode = () => 
+  TEST_CONFIG.ENABLED && 
+  (TEST_CONFIG.MODE === 'backend' || TEST_CONFIG.MODE === 'hybrid');
+
+export const isFrontendOnlyTestMode = () => 
+  TEST_CONFIG.ENABLED && TEST_CONFIG.MODE === 'frontend-only';
+
 export const getTestSubscriptionDuration = () => 
   TEST_CONFIG.SUBSCRIPTION.DEFAULT_DURATION_MINUTES;
 
@@ -57,12 +68,13 @@ export const shouldSimulateFailure = () =>
 export const getApiDelay = () => TEST_CONFIG.SUBSCRIPTION.API_DELAY_MS;
 
 // Test data generators
-export const generateTestSubscription = (plan = 'monthly', durationMinutes = 5) => {
+export const generateTestSubscription = (plan = 'monthly', durationMinutes = 5, userId?: string) => {
   const startDate = new Date();
   const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
   
   return {
-    id: `test_${Date.now()}`,
+    id: `test_${userId || Date.now()}`,
+    userId: userId,
     status: 'active',
     plan,
     paymentMethod: 'test',
@@ -120,5 +132,26 @@ export const testUtils = {
     if (typeof window !== 'undefined') {
       localStorage.setItem(key, JSON.stringify(data));
     }
+  },
+
+  // Get user-specific test data key
+  getUserTestKey: (userId: string) => `testSubscription_${userId}`,
+  
+  // Set user-specific test data
+  setUserTestData: (userId: string, data: any) => {
+    if (typeof window !== 'undefined') {
+      const key = testUtils.getUserTestKey(userId);
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+  },
+  
+  // Get user-specific test data
+  getUserTestData: (userId: string) => {
+    if (typeof window !== 'undefined') {
+      const key = testUtils.getUserTestKey(userId);
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : null;
+    }
+    return null;
   }
 }; 

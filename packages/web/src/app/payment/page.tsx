@@ -78,10 +78,48 @@ function PaymentPage() {
         <button
           className="w-full py-2 px-4 mt-4 border border-transparent text-sm font-medium rounded-md text-white"
           style={{ backgroundColor: '#6A0DAD' }}
-          onClick={() => {
-            alert('Continue without payment is currently disabled.');
+          onClick={async () => {
+            setError(null);
+            setLoading(true);
+            try {
+              if (pendingRegistrationForm) {
+                // Registration flow
+                const response = await fetch('/api/users/register/user', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ...pendingRegistrationForm, phoneNumber }),
+                });
+                const data = await response.json();
+                if (data.success && data.data && data.data.token && data.data.user) {
+                  const token = data.data.token;
+                  localStorage.setItem('token', token);
+                  setPendingRegistrationForm(null);
+                  await completeRegistration();
+                  await checkAuth();
+                  await refreshSubscriptionStatus();
+                  router.push('/');
+                } else {
+                  setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');
+                }
+              } else if (isTestEnabled && user) {
+                // Test subscription for expired users
+                await createTestSubscription();
+                router.push('/');
+              } else {
+                setError('No valid action available');
+              }
+            } catch (err) {
+              let errorMsg = 'Network error during registration';
+              if (err && typeof err === 'object' && 'message' in err) {
+                errorMsg = (err as any).message;
+              } else if (typeof err === 'string') {
+                errorMsg = err;
+              }
+              setError(errorMsg);
+            }
+            setLoading(false);
           }}
-          disabled={true}
+          disabled={loading}
         >
           {loading ? 'Processing...' : 'Continue without payment'}
         </button>

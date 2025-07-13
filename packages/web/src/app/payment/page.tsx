@@ -72,11 +72,23 @@ function PaymentPage() {
       if (isTestEnabled && !disableAutoCreation) {
         // Use the new pre-creation approach to avoid race conditions
         await ensureTestSubscription();
-        await refreshSubscriptionStatus();
-        if (pendingRegistration) {
-          await completeRegistration();
+        // Wait for subscription status to become active
+        let attempts = 0;
+        let refreshed = false;
+        while (attempts < 5) {
+          await refreshSubscriptionStatus();
+          if (subscriptionStatus && subscriptionStatus.status === 'active') {
+            refreshed = true;
+            break;
+          }
+          await new Promise(res => setTimeout(res, 500)); // wait 0.5s
+          attempts++;
         }
-        router.push('/');
+        if (refreshed) {
+          router.push('/');
+        } else {
+          setError('Subscription activation failed. Please try again.');
+        }
       } else {
         // TODO: Integrate real payment logic here
         setError('Real payment not implemented');

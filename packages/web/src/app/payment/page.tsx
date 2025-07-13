@@ -181,7 +181,8 @@ function PaymentPage() {
                   localStorage.setItem('token', token);
                   setPendingRegistrationForm(null);
                   await completeRegistration();
-                  await checkAuth(); // Ensure AuthContext is updated
+                  await checkAuth();
+                  await refreshSubscriptionStatus();
                   router.push('/');
                 } else {
                   setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');

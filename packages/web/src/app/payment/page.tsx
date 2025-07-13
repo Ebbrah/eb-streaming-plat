@@ -91,12 +91,23 @@ function PaymentPage() {
                 });
                 const data = await response.json();
                 if (data.success && data.data && data.data.token && data.data.user) {
-                  const token = data.data.token;
-                  localStorage.setItem('token', token);
+                  localStorage.setItem('token', data.data.token);
                   setPendingRegistrationForm(null);
                   await completeRegistration();
                   await checkAuth();
                   await refreshSubscriptionStatus();
+                  // Wait for context to update before redirecting
+                  let attempts = 0;
+                  let maxAttempts = 5;
+                  let delay = 500;
+                  while (attempts < maxAttempts) {
+                    await new Promise(res => setTimeout(res, delay));
+                    if (typeof window !== 'undefined' && localStorage.getItem('token')) {
+                      // Optionally, check context for isAuthenticated and subscriptionStatus
+                      break;
+                    }
+                    attempts++;
+                  }
                   router.push('/');
                 } else {
                   setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');

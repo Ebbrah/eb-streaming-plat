@@ -62,7 +62,8 @@ function PaymentPage() {
     setLoading(true);
     
     try {
-      if (isTestEnabled) {
+      const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
+      if (isTestEnabled && !disableAutoCreation) {
         // Use the new pre-creation approach to avoid race conditions
         await ensureTestSubscription();
         await refreshSubscriptionStatus();
@@ -165,7 +166,8 @@ function PaymentPage() {
                   await checkAuth(); // Ensure AuthContext is updated
                   
                   // 2. Use the new pre-creation approach to avoid race conditions
-                  if (isTestEnabled) {
+                  const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
+                  if (isTestEnabled && !disableAutoCreation) {
                     console.log('Test mode enabled - ensuring test subscription exists...');
                     try {
                       // Pre-create subscription before redirect

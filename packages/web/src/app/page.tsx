@@ -18,14 +18,17 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If user is authenticated but subscription is not active, try to ensure test subscription first
+    // If user is authenticated but subscription is not active, redirect to payment
+    // UNLESS we're testing natural expiration (disable auto-creation)
     const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
+    const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
+    
     if (
       isAuthenticated &&
       subscriptionStatus &&
       subscriptionStatus.status !== 'active'
     ) {
-      if (isTestMode) {
+      if (isTestMode && !disableAutoCreation) {
         // In test mode, try to ensure test subscription exists before redirecting
         ensureTestSubscription().then(() => {
           // After ensuring subscription, check again
@@ -37,7 +40,7 @@ export default function HomePage() {
           router.push('/payment?expired=1');
         });
       } else {
-        // Not in test mode, redirect immediately
+        // Not in test mode or auto-creation disabled, redirect immediately
         router.push('/payment?expired=1');
       }
     }

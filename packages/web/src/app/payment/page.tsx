@@ -75,38 +75,14 @@ function PaymentPage() {
             setLoading(true);
             try {
               if (user) {
-                // Registration flow
-                const response = await fetch('/api/users/register/user', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ phoneNumber }),
-                });
-                const data = await response.json();
-                if (data.success && data.data && data.data.token && data.data.user) {
-                  localStorage.setItem('token', data.data.token);
-                  await checkAuth();
-                  await refreshSubscriptionStatus();
-                  // Wait for context to update before redirecting
-                  let attempts = 0;
-                  let maxAttempts = 5;
-                  let delay = 500;
-                  while (attempts < maxAttempts) {
-                    await new Promise(res => setTimeout(res, delay));
-                    if (typeof window !== 'undefined' && localStorage.getItem('token')) {
-                      // Optionally, check context for isAuthenticated and subscriptionStatus
-                      break;
-                    }
-                    attempts++;
-                  }
-                  router.push('/');
-                } else {
-                  setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');
-                }
+                await createTestSubscription();
+                await refreshSubscriptionStatus();
+                router.push('/');
               } else {
-                setError('No valid action available');
+                setError('You must be logged in to subscribe.');
               }
             } catch (err) {
-              let errorMsg = 'Network error during registration';
+              let errorMsg = 'Network error during subscription';
               if (err && typeof err === 'object' && 'message' in err) {
                 errorMsg = (err as any).message;
               } else if (typeof err === 'string') {

@@ -104,7 +104,25 @@ function PaymentPage() {
               } else if (isTestEnabled && user) {
                 // Test subscription for expired users
                 await createTestSubscription();
-                router.push('/');
+                // Poll for subscription status to become active
+                let attempts = 0;
+                let maxAttempts = 5;
+                let delay = 500;
+                let status = null;
+                while (attempts < maxAttempts) {
+                  await refreshSubscriptionStatus();
+                  status = subscriptionStatus;
+                  if (status && status.status === 'active') {
+                    break;
+                  }
+                  await new Promise(res => setTimeout(res, delay));
+                  attempts++;
+                }
+                if (status && status.status === 'active') {
+                  router.push('/');
+                } else {
+                  setError('Subscription not yet active. Please try again.');
+                }
               } else {
                 setError('No valid action available');
               }

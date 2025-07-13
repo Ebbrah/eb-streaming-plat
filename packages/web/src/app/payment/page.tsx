@@ -74,7 +74,8 @@ function PaymentPage() {
             setError(null);
             setLoading(true);
             try {
-              // WARNING: Allowing unauthenticated test subscription creation (for testing only)
+              // Ensure user context is up to date before creating subscription
+              await checkAuth();
               await createTestSubscription();
               await refreshSubscriptionStatus();
               router.push('/');

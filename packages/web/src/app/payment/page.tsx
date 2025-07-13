@@ -72,19 +72,19 @@ function PaymentPage() {
       if (isTestEnabled && !disableAutoCreation) {
         // Use the new pre-creation approach to avoid race conditions
         await ensureTestSubscription();
-        // Wait for subscription status to become active
+        // Wait for user and subscription to be active
         let attempts = 0;
-        let refreshed = false;
+        let ready = false;
         while (attempts < 5) {
-          await refreshSubscriptionStatus();
-          if (subscriptionStatus && subscriptionStatus.status === 'active') {
-            refreshed = true;
+          await checkAuth();
+          if (user && subscriptionStatus && subscriptionStatus.status === 'active') {
+            ready = true;
             break;
           }
           await new Promise(res => setTimeout(res, 500)); // wait 0.5s
           attempts++;
         }
-        if (refreshed) {
+        if (ready) {
           router.push('/');
         } else {
           setError('Subscription activation failed. Please try again.');
@@ -182,7 +182,6 @@ function PaymentPage() {
                   setPendingRegistrationForm(null);
                   await completeRegistration();
                   await checkAuth(); // Ensure AuthContext is updated
-                  
                   // 2. Use the new pre-creation approach to avoid race conditions
                   const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
                   if (isTestEnabled && !disableAutoCreation) {
@@ -190,8 +189,23 @@ function PaymentPage() {
                     try {
                       // Pre-create subscription before redirect
                       await ensureTestSubscription();
-                      console.log('Test subscription ensured, redirecting to home...');
-                      router.push('/');
+                      // Wait for user and subscription to be active
+                      let attempts = 0;
+                      let ready = false;
+                      while (attempts < 5) {
+                        await checkAuth();
+                        if (user && subscriptionStatus && subscriptionStatus.status === 'active') {
+                          ready = true;
+                          break;
+                        }
+                        await new Promise(res => setTimeout(res, 500));
+                        attempts++;
+                      }
+                      if (ready) {
+                        router.push('/');
+                      } else {
+                        setError('Subscription activation failed. Please try again.');
+                      }
                     } catch (error) {
                       console.error('Test subscription creation failed:', error);
                       setError('Failed to create test subscription');
@@ -208,10 +222,8 @@ function PaymentPage() {
                           'Content-Type': 'application/json',
                         },
                       });
-                      
                       const testData = await testResponse.json();
                       console.log('Test subscription response:', testData);
-                      
                       if (testData.success) {
                         console.log('Test subscription created successfully');
                         testSubscriptionSuccess = true;
@@ -223,14 +235,22 @@ function PaymentPage() {
                       console.error('Test subscription error:', err);
                       testSubscriptionSuccess = false;
                     }
-                    
-                    // 4. Redirect based on test subscription result
-                    if (testSubscriptionSuccess) {
-                      console.log('Registration and test subscription completed, redirecting to home...');
+                    // 4. Wait for user and subscription to be active
+                    let attempts = 0;
+                    let ready = false;
+                    while (attempts < 5) {
+                      await checkAuth();
+                      if (user && subscriptionStatus && subscriptionStatus.status === 'active') {
+                        ready = true;
+                        break;
+                      }
+                      await new Promise(res => setTimeout(res, 500));
+                      attempts++;
+                    }
+                    if (testSubscriptionSuccess && ready) {
                       router.push('/');
                     } else {
-                      console.log('Test subscription failed, redirecting to payment with expired status...');
-                      router.push('/payment?expired=1');
+                      setError('Subscription activation failed. Please try again.');
                     }
                   }
                 } else {

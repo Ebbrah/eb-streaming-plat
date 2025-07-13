@@ -182,23 +182,7 @@ function PaymentPage() {
                   setPendingRegistrationForm(null);
                   await completeRegistration();
                   await checkAuth(); // Ensure AuthContext is updated
-                  // Wait for user to be authenticated before redirecting
-                  let attempts = 0;
-                  let ready = false;
-                  while (attempts < 10) {
-                    await checkAuth();
-                    if (user) {
-                      ready = true;
-                      break;
-                    }
-                    await new Promise(res => setTimeout(res, 500));
-                    attempts++;
-                  }
-                  if (ready) {
-                    router.push('/');
-                  } else {
-                    setError('Login failed after registration. Please try again.');
-                  }
+                  router.push('/');
                 } else {
                   setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');
                 }
@@ -215,7 +199,7 @@ function PaymentPage() {
             }}
             disabled={loading}
           >
-            {loading ? 'Processing... (Authenticating)' : 'Continue without payment'}
+            {loading ? 'Processing...' : 'Continue without payment'}
           </button>
           {loading && (
             <div className="flex justify-center mt-4">

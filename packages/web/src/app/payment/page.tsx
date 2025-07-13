@@ -182,76 +182,22 @@ function PaymentPage() {
                   setPendingRegistrationForm(null);
                   await completeRegistration();
                   await checkAuth(); // Ensure AuthContext is updated
-                  // 2. Use the new pre-creation approach to avoid race conditions
-                  const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
-                  if (isTestEnabled && !disableAutoCreation) {
-                    console.log('Test mode enabled - ensuring test subscription exists...');
-                    try {
-                      // Pre-create subscription before redirect
-                      await ensureTestSubscription();
-                      // Wait for user and subscription to be active
-                      let attempts = 0;
-                      let ready = false;
-                      while (attempts < 5) {
-                        await checkAuth();
-                        if (user && subscriptionStatus && subscriptionStatus.status === 'active') {
-                          ready = true;
-                          break;
-                        }
-                        await new Promise(res => setTimeout(res, 500));
-                        attempts++;
-                      }
-                      if (ready) {
-                        router.push('/');
-                      } else {
-                        setError('Subscription activation failed. Please try again.');
-                      }
-                    } catch (error) {
-                      console.error('Test subscription creation failed:', error);
-                      setError('Failed to create test subscription');
+                  // Wait for user to be authenticated before redirecting
+                  let attempts = 0;
+                  let ready = false;
+                  while (attempts < 10) {
+                    await checkAuth();
+                    if (user) {
+                      ready = true;
+                      break;
                     }
+                    await new Promise(res => setTimeout(res, 500));
+                    attempts++;
+                  }
+                  if (ready) {
+                    router.push('/');
                   } else {
-                    // 3. Call test subscription endpoint with better error handling
-                    let testSubscriptionSuccess = false;
-                    try {
-                      console.log('Creating test subscription with token:', token.substring(0, 20) + '...');
-                      const testResponse = await fetch('/api/subscriptions/test-create', {
-                        method: 'POST',
-                        headers: {
-                          'Authorization': `Bearer ${token}`,
-                          'Content-Type': 'application/json',
-                        },
-                      });
-                      const testData = await testResponse.json();
-                      console.log('Test subscription response:', testData);
-                      if (testData.success) {
-                        console.log('Test subscription created successfully');
-                        testSubscriptionSuccess = true;
-                      } else {
-                        console.warn('Test subscription failed:', testData.message);
-                        testSubscriptionSuccess = false;
-                      }
-                    } catch (err) {
-                      console.error('Test subscription error:', err);
-                      testSubscriptionSuccess = false;
-                    }
-                    // 4. Wait for user and subscription to be active
-                    let attempts = 0;
-                    let ready = false;
-                    while (attempts < 5) {
-                      await checkAuth();
-                      if (user && subscriptionStatus && subscriptionStatus.status === 'active') {
-                        ready = true;
-                        break;
-                      }
-                      await new Promise(res => setTimeout(res, 500));
-                      attempts++;
-                    }
-                    if (testSubscriptionSuccess && ready) {
-                      router.push('/');
-                    } else {
-                      setError('Subscription activation failed. Please try again.');
-                    }
+                    setError('Login failed after registration. Please try again.');
                   }
                 } else {
                   setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');
@@ -269,7 +215,7 @@ function PaymentPage() {
             }}
             disabled={loading}
           >
-            {loading ? 'Processing...' : 'Continue without payment'}
+            {loading ? 'Processing... (Authenticating)' : 'Continue without payment'}
           </button>
           {loading && (
             <div className="flex justify-center mt-4">

@@ -7,26 +7,6 @@ import { useEffect, useState, Suspense } from 'react';
 
 const isTestEnabled = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
 
-function createTestSubscription(token: string, onSuccess: () => void, onError: (msg: string) => void) {
-  fetch('/api/subscriptions/test-create', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        alert('Test subscription created!');
-        onSuccess();
-      } else {
-        onError(data.message || 'Failed to create test subscription');
-      }
-    })
-    .catch(() => onError('Network error'));
-}
-
 function PaymentPage() {
   const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth, createTestSubscription, ensureTestSubscription } = useAuth();
   const router = useRouter();
@@ -57,54 +37,7 @@ function PaymentPage() {
     }
   }, [user, pendingRegistration, pendingRegistrationForm, router]);
 
-  const handleRenew = async () => {
-    // For expired subscriptions, redirect to payment screen to get new subscription
-    if (user && expired) {
-      router.push('/payment');
-      return;
-    }
-    
-    setError(null);
-    setLoading(true);
-    
-    try {
-      const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
-      if (isTestEnabled && !disableAutoCreation) {
-        // Use the new pre-creation approach to avoid race conditions
-        await ensureTestSubscription();
-        // Wait for user and subscription to be active
-        let attempts = 0;
-        let ready = false;
-        while (attempts < 5) {
-          await checkAuth();
-          if (user && subscriptionStatus && subscriptionStatus.status === 'active') {
-            ready = true;
-            break;
-          }
-          await new Promise(res => setTimeout(res, 500)); // wait 0.5s
-          attempts++;
-        }
-        if (ready) {
-          router.push('/');
-        } else {
-          setError('Subscription activation failed. Please try again.');
-        }
-      } else {
-        // TODO: Integrate real payment logic here
-        setError('Real payment not implemented');
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to create subscription');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    logout();
-  };
-
-  // If in registration flow, always show payment form
+  // Only show registration payment form
   if (pendingRegistrationForm) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
@@ -213,37 +146,6 @@ function PaymentPage() {
     );
   }
 
-  // Only show expired UI if user is authenticated and subscription is expired
-  if (user && expired) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Subscription Expired
-          </h2>
-          <p className="text-center text-gray-600 mb-4">
-            Your subscription has expired. Please renew to continue enjoying premium content.
-          </p>
-          {error && <div className="text-red-500 text-center mb-2">{error}</div>}
-          <button
-            className="w-full py-2 px-4 mb-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-            onClick={handleRenew}
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : 'Get New Subscription'}
-          </button>
-          <button
-            className="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
-            onClick={handleCancel}
-            disabled={loading}
-          >
-            Cancel / Logout
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   // Default: show payment form for authenticated users (not expired)
   return (
     <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
@@ -258,10 +160,21 @@ function PaymentPage() {
         {isTestEnabled && user && (
           <button
             className="w-full py-2 px-4 mt-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            onClick={handleRenew}
+            onClick={async () => {
+              setError(null);
+              setLoading(true);
+              try {
+                await createTestSubscription();
+                setLoading(false);
+                router.push('/');
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to create test subscription');
+                setLoading(false);
+              }
+            }}
             disabled={loading}
           >
-            Continue without payment (Test)
+            {loading ? 'Processing...' : 'Continue without payment (Test)'}
           </button>
         )}
         {error && <div className="text-red-500 text-center mt-2">{error}</div>}

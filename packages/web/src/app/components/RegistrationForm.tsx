@@ -28,15 +28,18 @@ export default function RegistrationForm({ form }: RegistrationFormProps) {
     setIsLoading(true);
     try {
       const data = await register(formData.name, formData.email, formData.password);
+      console.log('[RegistrationForm] Registration response:', data);
       if (data && data.data && data.data.token && data.data.user) {
         localStorage.setItem('token', data.data.token);
+        console.log('[RegistrationForm] Token set in localStorage:', data.data.token);
         // Optionally, call checkAuth() if needed
         router.push('/payment');
       } else {
+        console.error('[RegistrationForm] Registration failed, missing token or user:', data);
         throw new Error('Registration failed');
       }
     } catch (error: any) {
-      console.error('Registration error:', error);
+      console.error('[RegistrationForm] Registration error:', error);
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
                           error.message || 

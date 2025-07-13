@@ -74,13 +74,10 @@ function PaymentPage() {
             setError(null);
             setLoading(true);
             try {
-              if (user) {
-                await createTestSubscription();
-                await refreshSubscriptionStatus();
-                router.push('/');
-              } else {
-                setError('You must be logged in to subscribe.');
-              }
+              // WARNING: Allowing unauthenticated test subscription creation (for testing only)
+              await createTestSubscription();
+              await refreshSubscriptionStatus();
+              router.push('/');
             } catch (err) {
               let errorMsg = 'Network error during subscription';
               if (err && typeof err === 'object' && 'message' in err) {

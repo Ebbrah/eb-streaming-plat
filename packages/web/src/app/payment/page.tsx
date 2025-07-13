@@ -31,12 +31,6 @@ function PaymentPage() {
     },
   ];
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/auth/login');
-    }
-  }, [user, router]);
-
   // Single payment screen for all cases
   return (
     <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">

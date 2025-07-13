@@ -32,7 +32,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<any>;
   completeRegistration: () => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -402,7 +402,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string): Promise<any> => {
     try {
       console.log('Auth: Starting registration for:', email);
       const response = await fetch('/api/users/register/user', {
@@ -417,16 +417,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Auth: Registration response:', { status: response.status, success: data.success });
       
       if (data.success && data.data && data.data.token && data.data.user) {
-        // Store registration data with token but don't log in yet
-        const pendingUser: PendingRegistration = {
-          id: data.data.user.id,
-          email: data.data.user.email,
-          name: data.data.user.name,
-          role: data.data.user.role,
-          isSuperAdmin: data.data.user.isSuperAdmin || false,
-          token: data.data.token
-        };
-        setPendingRegistration(pendingUser);
         return data;
       } else {
         console.error('Auth: Registration failed - invalid response structure:', data);

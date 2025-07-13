@@ -6,10 +6,9 @@ import LoggedInHome from './components/LoggedInHome';
 import TrailerPlayer from './components/TrailerPlayer';
 import { Movie, movieApi } from '@mana/shared';
 import { useRouter } from 'next/navigation';
-import RegistrationForm from './components/RegistrationForm'; // Make sure this import matches your actual registration form component
 
 export default function HomePage() {
-  const { isAuthenticated, loading: authLoading, user, subscriptionStatus, ensureTestSubscription, pendingRegistrationForm } = useAuth();
+  const { isAuthenticated, loading: authLoading, user, subscriptionStatus, ensureTestSubscription } = useAuth();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,12 +105,6 @@ export default function HomePage() {
     console.warn('[DIAG] HomePage: Movies array is empty or not set:', movies);
     return <div className="text-gray-400 text-center py-8">No movies found.</div>;
   }
-
-  // Render registration form only if in registration flow
-  if (pendingRegistrationForm) {
-    return <RegistrationForm form={pendingRegistrationForm} />;
-  }
-
   return (
     <>
       <LoggedInHome movies={movies} user={user || undefined} />

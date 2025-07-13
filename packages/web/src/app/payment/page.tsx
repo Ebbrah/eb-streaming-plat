@@ -8,7 +8,7 @@ import { useEffect, useState, Suspense } from 'react';
 const isTestEnabled = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
 
 function PaymentPage() {
-  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, pendingRegistration, completeRegistration, pendingRegistrationForm, setPendingRegistrationForm, checkAuth, createTestSubscription, ensureTestSubscription } = useAuth();
+  const { user, logout, subscriptionStatus, refreshSubscriptionStatus, checkAuth, createTestSubscription, ensureTestSubscription } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -32,10 +32,10 @@ function PaymentPage() {
   ];
 
   useEffect(() => {
-    if (!user && !pendingRegistration && !pendingRegistrationForm) {
+    if (!user) {
       router.push('/auth/login');
     }
-  }, [user, pendingRegistration, pendingRegistrationForm, router]);
+  }, [user, router]);
 
   // Single payment screen for all cases
   return (
@@ -45,9 +45,7 @@ function PaymentPage() {
           Choose Payment Method
         </h2>
         <p className="text-center text-gray-600 mb-4">
-          {pendingRegistrationForm && pendingRegistrationForm.name
-            ? `Complete your registration, ${pendingRegistrationForm.name}!`
-            : expired
+          {expired
             ? 'Your subscription has expired. Please renew to continue.'
             : 'Select your preferred payment method'}
         </p>
@@ -82,18 +80,16 @@ function PaymentPage() {
             setError(null);
             setLoading(true);
             try {
-              if (pendingRegistrationForm) {
+              if (user) {
                 // Registration flow
                 const response = await fetch('/api/users/register/user', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ ...pendingRegistrationForm, phoneNumber }),
+                  body: JSON.stringify({ phoneNumber }),
                 });
                 const data = await response.json();
                 if (data.success && data.data && data.data.token && data.data.user) {
                   localStorage.setItem('token', data.data.token);
-                  setPendingRegistrationForm(null);
-                  await completeRegistration();
                   await checkAuth();
                   await refreshSubscriptionStatus();
                   // Wait for context to update before redirecting
@@ -111,28 +107,6 @@ function PaymentPage() {
                   router.push('/');
                 } else {
                   setError(data.message || (data.errors && JSON.stringify(data.errors)) || 'Registration failed after payment');
-                }
-              } else if (isTestEnabled && user) {
-                // Test subscription for expired users
-                await createTestSubscription();
-                // Poll for subscription status to become active
-                let attempts = 0;
-                let maxAttempts = 5;
-                let delay = 500;
-                let status = null;
-                while (attempts < maxAttempts) {
-                  await refreshSubscriptionStatus();
-                  status = subscriptionStatus;
-                  if (status && status.status === 'active') {
-                    break;
-                  }
-                  await new Promise(res => setTimeout(res, delay));
-                  attempts++;
-                }
-                if (status && status.status === 'active') {
-                  router.push('/');
-                } else {
-                  setError('Subscription not yet active. Please try again.');
                 }
               } else {
                 setError('No valid action available');

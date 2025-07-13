@@ -23,12 +23,16 @@ export default function HomePage() {
     const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
     const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
     
+    console.log('[HOMEPAGE] Debug - isTestMode:', isTestMode, 'disableAutoCreation:', disableAutoCreation);
+    
     if (
       isAuthenticated &&
       subscriptionStatus &&
       subscriptionStatus.status !== 'active'
     ) {
+      console.log('[HOMEPAGE] Subscription not active, checking conditions...');
       if (isTestMode && !disableAutoCreation) {
+        console.log('[HOMEPAGE] Calling ensureTestSubscription...');
         // In test mode, try to ensure test subscription exists before redirecting
         ensureTestSubscription().then(() => {
           // After ensuring subscription, check again
@@ -40,6 +44,7 @@ export default function HomePage() {
           router.push('/payment?expired=1');
         });
       } else {
+        console.log('[HOMEPAGE] Redirecting to payment immediately...');
         // Not in test mode or auto-creation disabled, redirect immediately
         router.push('/payment?expired=1');
       }

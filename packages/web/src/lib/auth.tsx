@@ -210,7 +210,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
     const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
     
-    if (!isTestMode || disableAutoCreation) return;
+    console.log('[ENSURE] Debug - isTestMode:', isTestMode, 'disableAutoCreation:', disableAutoCreation);
+    
+    if (!isTestMode || disableAutoCreation) {
+      console.log('[ENSURE] Skipping auto-creation - isTestMode:', isTestMode, 'disableAutoCreation:', disableAutoCreation);
+      return;
+    }
 
     const token = localStorage.getItem('token');
     if (!token) return;

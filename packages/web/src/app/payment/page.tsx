@@ -58,6 +58,12 @@ function PaymentPage() {
   }, [user, pendingRegistration, pendingRegistrationForm, router]);
 
   const handleRenew = async () => {
+    // For expired subscriptions, redirect to payment screen to get new subscription
+    if (user && expired) {
+      router.push('/payment');
+      return;
+    }
+    
     setError(null);
     setLoading(true);
     
@@ -261,7 +267,7 @@ function PaymentPage() {
             onClick={handleRenew}
             disabled={loading}
           >
-            {loading ? 'Processing...' : 'Renew Subscription'}
+            {loading ? 'Processing...' : 'Get New Subscription'}
           </button>
           <button
             className="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
@@ -270,15 +276,6 @@ function PaymentPage() {
           >
             Cancel / Logout
           </button>
-          {isTestEnabled && (
-            <button
-              className="w-full py-2 px-4 mt-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              onClick={handleRenew}
-              disabled={loading}
-            >
-              Continue without payment (Test)
-            </button>
-          )}
         </div>
       </div>
     );
@@ -295,7 +292,7 @@ function PaymentPage() {
           Please complete your payment to activate your subscription.
         </p>
         {/* TODO: Add real payment form here */}
-        {isTestEnabled && (
+        {isTestEnabled && user && (
           <button
             className="w-full py-2 px-4 mt-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             onClick={handleRenew}

@@ -26,9 +26,9 @@ export default function LandingPage({ featuredMovies = [] }: LandingPageProps) {
   const handleGetStarted = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      router.push(`/auth/login?register=1&email=${encodeURIComponent(email)}`);
+      router.push(`/auth/register?email=${encodeURIComponent(email)}`);
     } else {
-      router.push('/auth/login?register=1');
+      router.push('/auth/register');
     }
   };
 

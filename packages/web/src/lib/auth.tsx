@@ -208,7 +208,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // NEW: Pre-create test subscription before auth checks
   const ensureTestSubscription = async () => {
     const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
-    if (!isTestMode) return;
+    const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
+    
+    if (!isTestMode || disableAutoCreation) return;
 
     const token = localStorage.getItem('token');
     if (!token) return;

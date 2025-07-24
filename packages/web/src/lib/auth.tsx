@@ -190,8 +190,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Store token and user data
       localStorage.setItem('token', data.data.token);
-      setUser(data.data.user);
-      
+      // Instead of using the login response user, call checkAuth to get the full user profile (with isSuperAdmin)
+      await checkAuth();
       // Refresh subscription status and get latest user info
       await refreshSubscriptionStatus();
       const latestUser = data.data.user;

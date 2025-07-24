@@ -35,33 +35,17 @@ export default function Reports() {
         toast.error('Please log in again');
         return;
       }
-
-      // For now, we'll simulate the data since we don't have the backend endpoints yet
-      // In a real implementation, you would fetch this from your backend
-      const mockData: ReportData = {
-        totalUsers: 1250,
-        totalAdmins: 8,
-        totalMovies: 45,
-        monthlySubscribers: 890,
-        totalRevenue: 125000,
-        topViewedMovies: [
-          { title: "The Great Commission", views: 1250 },
-          { title: "Walking in Faith", views: 980 },
-          { title: "Kingdom Principles", views: 750 },
-          { title: "Divine Purpose", views: 620 },
-          { title: "Spiritual Growth", views: 580 }
-        ],
-        userGrowth: [
-          { month: 'Jan', newUsers: 45 },
-          { month: 'Feb', newUsers: 52 },
-          { month: 'Mar', newUsers: 38 },
-          { month: 'Apr', newUsers: 67 },
-          { month: 'May', newUsers: 73 },
-          { month: 'Jun', newUsers: 89 }
-        ]
-      };
-
-      setReportData(mockData);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/users/reports`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (!data.success) {
+        toast.error(data.message || 'Failed to fetch reports');
+        return;
+      }
+      setReportData(data.data);
     } catch (error) {
       console.error('Error fetching report data:', error);
       toast.error('Error fetching report data');

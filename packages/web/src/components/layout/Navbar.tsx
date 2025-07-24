@@ -29,12 +29,12 @@ export default function Navbar() {
               <span className="text-2xl font-extrabold tracking-tight text-purple-400 group-hover:text-purple-300 transition">Mana</span>
             </button>
             <div className="hidden sm:flex sm:space-x-6">
-              <Link href="/movies" className="text-gray-200 hover:text-purple-300 transition px-2 py-1 rounded-lg hover:bg-purple-900/50 font-medium">
+              {/* <Link href="/movies" className="text-gray-200 hover:text-purple-300 transition px-2 py-1 rounded-lg hover:bg-purple-900/50 font-medium">
                 Movies
               </Link>
               <Link href="/movies/search" className="text-gray-200 hover:text-purple-300 transition px-2 py-1 rounded-lg hover:bg-purple-900/50 font-medium">
                 Search
-              </Link>
+              </Link> */}
               {user?.role === 'admin' && (
                 <Link href="/admin" className="text-gray-200 hover:text-purple-300 transition px-2 py-1 rounded-lg hover:bg-purple-900/50 font-medium">
                   Admin

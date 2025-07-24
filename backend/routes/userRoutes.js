@@ -87,4 +87,7 @@ router.delete('/:userId', auth, async (req, res, next) => {
     }
 });
 
+// Reports route for admin dashboard
+router.get('/reports', auth, UserController.getReports);
+
 module.exports = router; 

@@ -272,6 +272,72 @@ class UserController {
             });
         }
     }
+
+    // Reports for admin dashboard
+    static async getReports(req, res) {
+        try {
+            // Only allow admins or superadmins
+            if (!req.user || (req.user.role !== 'admin' && !req.user.isSuperAdmin)) {
+                return res.status(403).json({ message: 'Forbidden', success: false });
+            }
+            // Models
+            const User = require('../models/User');
+            const Movie = require('../models/Movie');
+            const Subscription = require('../models/Subscription');
+
+            // Total users
+            const totalUsers = await User.countDocuments();
+            // Total admins
+            const totalAdmins = await User.countDocuments({ role: 'admin' });
+            // Total movies
+            const totalMovies = await Movie.countDocuments();
+            // Monthly subscribers (active subscriptions in current month)
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0,0,0,0);
+            const monthlySubscribers = await Subscription.countDocuments({
+                status: 'active',
+                startDate: { $gte: startOfMonth }
+            });
+            // Total revenue (sum of all subscription payments)
+            const revenueAgg = await Subscription.aggregate([
+                { $match: { paymentStatus: 'completed' } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]);
+            const totalRevenue = revenueAgg[0]?.total || 0;
+            // Top viewed movies (by views field)
+            const topViewedMovies = await Movie.find({}).sort({ views: -1 }).limit(5).select('title views');
+            // User growth per month (last 6 months)
+            const now = new Date();
+            const userGrowth = [];
+            for (let i = 5; i >= 0; i--) {
+                const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+                const newUsers = await User.countDocuments({
+                    createdAt: { $gte: month, $lt: nextMonth }
+                });
+                userGrowth.push({
+                    month: month.toLocaleString('default', { month: 'short' }),
+                    newUsers
+                });
+            }
+            res.json({
+                success: true,
+                data: {
+                    totalUsers,
+                    totalAdmins,
+                    totalMovies,
+                    monthlySubscribers,
+                    totalRevenue,
+                    topViewedMovies,
+                    userGrowth
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching reports:', error);
+            res.status(500).json({ message: 'Error fetching reports', success: false });
+        }
+    }
 }
 
 module.exports = UserController; 

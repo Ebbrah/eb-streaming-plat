@@ -192,13 +192,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('token', data.data.token);
       setUser(data.data.user);
       
-      // Refresh subscription status
+      // Refresh subscription status and get latest user info
       await refreshSubscriptionStatus();
-      
-      console.log('✅ User logged in successfully');
-      
-      // Handle redirect based on subscription status
-      if (subscriptionStatus?.isActive) {
+      const latestUser = data.data.user;
+      const isAdmin = latestUser.role === 'admin' || latestUser.isSuperAdmin;
+
+      // Get latest subscription status from state
+      const latestSubscription = subscriptionStatus;
+      await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for state update
+
+      // Refetch subscriptionStatus from state after refresh
+      const subStatus = typeof window !== 'undefined' ? JSON.parse(JSON.stringify(subscriptionStatus)) : null;
+      const isActive = subStatus?.isActive;
+
+      if (isAdmin) {
+        console.log('✅ Admin/SuperAdmin login, redirecting to admin dashboard');
+        router.push('/admin');
+      } else if (isActive) {
         console.log('✅ User has active subscription, redirecting to home');
         router.push('/');
       } else {

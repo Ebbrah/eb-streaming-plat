@@ -148,16 +148,6 @@ function LoginForm() {
             </button>
           </div>
         </form>
-        {/* Mana Button: always go to landing page */}
-        <div className="mt-4 flex justify-center">
-          <button
-            type="button"
-            className="w-full py-2 px-4 border border-purple-600 text-purple-700 font-medium rounded-md bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-            onClick={() => router.push('/')}
-          >
-            Mana
-          </button>
-        </div>
       </div>
     </div>
   );

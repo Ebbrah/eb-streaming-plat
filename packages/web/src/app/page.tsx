@@ -18,16 +18,17 @@ export default function HomePage() {
 
   useEffect(() => {
     // If user is authenticated but subscription is not active, redirect to payment
-    // UNLESS we're testing natural expiration (disable auto-creation)
+    // UNLESS user is admin/superadmin
     const isTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_SUBSCRIPTIONS === 'true';
     const disableAutoCreation = process.env.NEXT_PUBLIC_DISABLE_AUTO_SUBSCRIPTION === 'true';
-    
-    console.log('[HOMEPAGE] Debug - isTestMode:', isTestMode, 'disableAutoCreation:', disableAutoCreation);
-    
+
+    const isAdmin = user?.role === 'admin' || user?.isSuperAdmin;
+
     if (
       isAuthenticated &&
       subscriptionStatus &&
-      subscriptionStatus.status !== 'active'
+      subscriptionStatus.status !== 'active' &&
+      !isAdmin
     ) {
       console.log('[HOMEPAGE] Subscription not active, checking conditions...');
       if (isTestMode && !disableAutoCreation) {
@@ -48,7 +49,7 @@ export default function HomePage() {
         router.push('/payment?expired=1');
       }
     }
-  }, [isAuthenticated, subscriptionStatus, router, ensureTestSubscription]);
+  }, [isAuthenticated, subscriptionStatus, router, ensureTestSubscription, user]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -98,7 +99,7 @@ export default function HomePage() {
     return <LandingPage featuredMovies={featuredMovies} />;
   }
   // If subscription is not active, don't render premium content (redirect will happen in useEffect)
-  if (subscriptionStatus && subscriptionStatus.status !== 'active') {
+  if (subscriptionStatus && subscriptionStatus.status !== 'active' && !(user?.role === 'admin' || user?.isSuperAdmin)) {
     return null;
   }
   if (!movies.length) {

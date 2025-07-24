@@ -3,19 +3,31 @@
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <nav className="sticky top-0 z-50 bg-gradient-to-b from-[#1a052a] via-[#2a093c] to-[#1a052a] shadow-lg border-b border-purple-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center group">
+            <button
+              className="flex items-center group bg-transparent border-none p-0 m-0 cursor-pointer"
+              onClick={() => {
+                if (user?.role === 'admin' || user?.isSuperAdmin) {
+                  router.push('/');
+                } else {
+                  router.push('/');
+                }
+              }}
+              style={{ background: 'none' }}
+            >
               <span className="text-2xl font-extrabold tracking-tight text-purple-400 group-hover:text-purple-300 transition">Mana</span>
-            </Link>
+            </button>
             <div className="hidden sm:flex sm:space-x-6">
               <Link href="/movies" className="text-gray-200 hover:text-purple-300 transition px-2 py-1 rounded-lg hover:bg-purple-900/50 font-medium">
                 Movies

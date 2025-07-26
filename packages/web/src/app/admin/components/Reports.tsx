@@ -17,6 +17,9 @@ interface ReportData {
     month: string;
     newUsers: number;
   }>;
+  totalViewsThisMonth?: number;
+  uniqueViewersThisMonth?: number;
+  avgViewsPerUserThisMonth?: number;
 }
 
 export default function Reports() {
@@ -172,7 +175,9 @@ export default function Reports() {
           <div className="space-y-6">
             <h3 className="text-lg font-semibold text-gray-900">Financial Report</h3>
             <div className="bg-green-50 p-6 rounded-lg">
-              <div className="text-3xl font-bold text-green-600 mb-2">${reportData.totalRevenue.toLocaleString()}</div>
+              <div className="text-3xl font-bold text-green-600 mb-2">
+                ${reportData.totalRevenue?.toLocaleString() || '0'}
+              </div>
               <div className="text-green-600 font-medium">Total Revenue</div>
               <div className="mt-4 text-sm text-green-500">
                 <div>• Monthly revenue: $12,500</div>
@@ -201,30 +206,36 @@ export default function Reports() {
           <div className="space-y-6">
             <h3 className="text-lg font-semibold text-gray-900">Viewer Reports</h3>
             <div className="bg-purple-50 p-6 rounded-lg">
-              <div className="text-3xl font-bold text-purple-600 mb-2">4,180</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">
+                {reportData.totalViewsThisMonth?.toLocaleString() || '0'}
+              </div>
               <div className="text-purple-600 font-medium">Total Views This Month</div>
             </div>
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <h4 className="font-semibold mb-3">Top Viewed Movies</h4>
               <div className="space-y-3">
-                {reportData.topViewedMovies.map((movie, index) => (
+                {reportData.topViewedMovies?.map((movie, index) => (
                   <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <span className="text-lg font-bold text-purple-600 mr-3">#{index + 1}</span>
                       <span className="font-medium">{movie.title}</span>
                     </div>
-                    <span className="text-sm text-gray-600">{movie.views.toLocaleString()} views</span>
+                    <span className="text-sm text-gray-600">{movie.views?.toLocaleString() || '0'} views</span>
                   </div>
-                ))}
+                )) || <div className="text-gray-500">No view data available</div>}
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-xl font-bold text-blue-600">2,450</div>
+                <div className="text-xl font-bold text-blue-600">
+                  {reportData.uniqueViewersThisMonth?.toLocaleString() || '0'}
+                </div>
                 <div className="text-sm text-blue-600">Unique Viewers</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <div className="text-xl font-bold text-green-600">1.7</div>
+                <div className="text-xl font-bold text-green-600">
+                  {reportData.avgViewsPerUserThisMonth?.toFixed(1) || '0.0'}
+                </div>
                 <div className="text-sm text-green-600">Average Views Per User</div>
               </div>
             </div>

@@ -321,6 +321,22 @@ class UserController {
                     newUsers
                 });
             }
+            // Viewer analytics (this month)
+            const View = require('../models/View');
+            const startOfMonthViews = new Date();
+            startOfMonthViews.setDate(1);
+            startOfMonthViews.setHours(0,0,0,0);
+            // Total views this month
+            const totalViewsThisMonth = await View.countDocuments({ viewedAt: { $gte: startOfMonthViews } });
+            // Unique viewers this month
+            const uniqueViewersThisMonthAgg = await View.aggregate([
+                { $match: { viewedAt: { $gte: startOfMonthViews } } },
+                { $group: { _id: "$user" } },
+                { $count: "uniqueViewers" }
+            ]);
+            const uniqueViewersThisMonth = uniqueViewersThisMonthAgg[0]?.uniqueViewers || 0;
+            // Average views per user this month
+            const avgViewsPerUserThisMonth = uniqueViewersThisMonth > 0 ? (totalViewsThisMonth / uniqueViewersThisMonth) : 0;
             res.json({
                 success: true,
                 data: {
@@ -330,12 +346,35 @@ class UserController {
                     monthlySubscribers,
                     totalRevenue,
                     topViewedMovies,
-                    userGrowth
+                    userGrowth,
+                    totalViewsThisMonth,
+                    uniqueViewersThisMonth,
+                    avgViewsPerUserThisMonth
                 }
             });
         } catch (error) {
             console.error('Error fetching reports:', error);
             res.status(500).json({ message: 'Error fetching reports', success: false });
+        }
+    }
+
+    // Record a movie view
+    static async recordView(req, res) {
+        try {
+            const View = require('../models/View');
+            const { movieId } = req.body;
+            if (!movieId) {
+                return res.status(400).json({ message: 'movieId is required', success: false });
+            }
+            const userId = req.user ? req.user.userId : null;
+            await View.create({
+                user: userId,
+                movie: movieId
+            });
+            res.json({ success: true, message: 'View recorded' });
+        } catch (error) {
+            console.error('Error recording view:', error);
+            res.status(500).json({ message: 'Error recording view', success: false });
         }
     }
 }

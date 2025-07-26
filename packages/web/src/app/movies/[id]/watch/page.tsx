@@ -30,6 +30,20 @@ export default function MovieWatchPage() {
         if (data.success) {
           setMovie(data.data);
           console.log('Movie set:', data.data);
+          // Record a view when the movie is successfully loaded
+          const token = localStorage.getItem('token');
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/users/record-view`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ movieId: data.data._id })
+          }).then(res => res.json()).then(resp => {
+            console.log('View recorded:', resp);
+          }).catch(err => {
+            console.error('Error recording view:', err);
+          });
         } else {
           console.error('Failed to fetch movie:', data.message);
         }

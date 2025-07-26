@@ -90,4 +90,7 @@ router.delete('/:userId', auth, async (req, res, next) => {
 // Reports route for admin dashboard
 router.get('/reports', auth, UserController.getReports);
 
+// Record a movie view (user optional)
+router.post('/record-view', auth.optional || ((req, res, next) => next()), UserController.recordView);
+
 module.exports = router; 

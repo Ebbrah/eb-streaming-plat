@@ -36,6 +36,22 @@ export default function LoggedInHome({ movies, user }: LoggedInHomeProps) {
 
   const handleThumbnailClick = (movie: Movie) => {
     console.log('LoggedInHome: Thumbnail clicked for movie:', movie.title, movie._id);
+    
+    // Record the view when user clicks to watch a movie
+    const token = localStorage.getItem('token');
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/users/record-view`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ movieId: movie._id })
+    }).then(res => res.json()).then(resp => {
+      console.log('View recorded from home screen:', resp);
+    }).catch(err => {
+      console.error('Error recording view from home screen:', err);
+    });
+    
     setSelectedMovie(movie);
   };
 

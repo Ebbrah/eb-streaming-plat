@@ -38,6 +38,21 @@ export default function TrailerPlayer({ movies = [], trailerDuration = 10000, mo
   const handleVideoLoad = () => {
     console.log('Video loaded successfully');
     setError(null);
+    
+    // Record view when video starts playing
+    const token = localStorage.getItem('token');
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/users/record-view`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ movieId: currentMovie._id })
+    }).then(res => res.json()).then(resp => {
+      console.log('View recorded from trailer player:', resp);
+    }).catch(err => {
+      console.error('Error recording view from trailer player:', err);
+    });
   };
 
   const isHls = trailerUrl && (trailerUrl.endsWith('.m3u8') || trailerUrl.includes('/hls/'));

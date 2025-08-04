@@ -163,42 +163,11 @@ const HomeScreen = ({ navigation }) => {
         }, {});
         setMoviesByGenre(groupedMovies);
       } else {
-        // User is not authenticated - fetch only public featured movies
-        console.log('Mobile HomeScreen: Unauthenticated, fetching public featured movies...');
-        
-        if (DEBUG_MODE) {
-          console.log(`Making request to: ${API_URL}/movies/public/featured`);
-        }
-        
-        const response = await axios.get(`${API_URL}/movies/public/featured`, {
-          timeout: 30000, // 30 second timeout
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (DEBUG_MODE) {
-          console.log('Public featured response received:', {
-            status: response.status,
-            dataKeys: Object.keys(response.data || {}),
-            success: response.data?.success
-          });
-        }
-        
-        const data = response.data;
-        console.log('Mobile HomeScreen: Public featured movies response:', data);
-        
-        if (data.success) {
-          const featuredMovies = data.data || [];
-          if (featuredMovies.length > 0) {
-            setFeaturedMovie(featuredMovies[0]);
-          }
-        } else {
-          setError(data.message || 'Failed to fetch featured movies');
-        }
-        setMovies([]); // No full movies for unauthenticated users
-        setMoviesByGenre({}); // No genre grouping for unauthenticated users
+        // User is not authenticated - this should not happen as HomeScreen is only for authenticated users
+        console.error('Mobile HomeScreen: Unauthenticated user reached HomeScreen - this should not happen');
+        setError('Authentication required. Please log in to access this feature.');
+        setMovies([]);
+        setMoviesByGenre({});
       }
     } catch (err) {
       console.error('Error fetching movies:', {

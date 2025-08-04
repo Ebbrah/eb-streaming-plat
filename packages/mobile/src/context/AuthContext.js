@@ -215,13 +215,13 @@ export const AuthProvider = ({ children }) => {
       };
       
       console.log('Registration request details:', {
-        url: `${API_URL}/users/register`,
+        url: `${API_URL}/api/users/register`,
         method: 'POST',
         headers: publicApi.defaults.headers,
         data: { ...requestData, password: '[REDACTED]' }
       });
 
-      const response = await publicApi.post('/users/register', requestData);
+      const response = await publicApi.post('/api/users/register', requestData);
 
       console.log('Registration response:', {
         status: response.status,
@@ -257,7 +257,7 @@ export const AuthProvider = ({ children }) => {
         response: error.response?.data,
         message: error.message,
         status: error.response?.status,
-        url: `${API_URL}/users/register`,
+        url: `${API_URL}/api/users/register`,
         headers: error.response?.headers,
         config: {
           url: error.config?.url,
